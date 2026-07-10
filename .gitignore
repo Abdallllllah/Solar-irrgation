@@ -1,0 +1,17 @@
+# Raw data (too large for GitHub)
+maize_crop_data.csv
+
+# Scratch/temp scripts
+analyze_data.py
+deep_analysis.py
+
+# Word docs
+*.docx
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
