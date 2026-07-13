@@ -195,10 +195,11 @@ const Controls = (() => {
         const legendMax = document.getElementById('legend-max');
 
         if (state.priceThreshold.enabled) {
-            legendTitle.textContent = `Break-even vs. $${state.priceThreshold.value}/ton`;
-            legendGradient.style.background = 'linear-gradient(to right, #10b981 0%, #10b981 50%, #ef4444 50%, #ef4444 100%)';
-            legendMin.textContent = 'Viable';
-            legendMax.textContent = 'Too Expensive';
+            const bm = state.priceThreshold.value;
+            legendTitle.textContent = `Break-even vs. $${bm}/ton benchmark`;
+            legendGradient.style.background = 'linear-gradient(to right, rgb(5,150,105) 0%, rgb(16,185,129) 25%, rgb(250,204,21) 50%, rgb(245,158,11) 75%, rgb(220,38,38) 100%)';
+            legendMin.textContent = '$0';
+            legendMax.textContent = `$${bm * 2}`;
         } else {
             let statLabel = '';
             if (cfg.temporal && state.statMode !== 'mean') {
