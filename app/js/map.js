@@ -16,9 +16,32 @@ const MapView = (() => {
     const SSA_CENTER = [20, -2];
     const SSA_ZOOM = 3.2;
 
-    const VIABLE_COLOR = [16, 185, 129, 230];     // green
-    const EXPENSIVE_COLOR = [239, 68, 68, 230];    // red
     const NONVIABLE_COLOR = [75, 85, 99, 120];     // gray
+    // Continuous price palette: deep green → light green → yellow → orange → red
+    const PRICE_PALETTE = [
+        [5, 150, 105],    // well below benchmark (great)
+        [16, 185, 129],   // below benchmark
+        [250, 204, 21],   // near benchmark
+        [245, 158, 11],   // above benchmark
+        [220, 38, 38]     // well above benchmark (bad)
+    ];
+    function getPriceColor(breakeven, benchmark) {
+        // ratio: 0 = free, 1 = exactly at benchmark, 2 = double the benchmark
+        const ratio = breakeven / benchmark;
+        // Map ratio to 0-1 range where 0=great (ratio~0), 0.5=benchmark, 1=bad (ratio≥2)
+        const t = Math.max(0, Math.min(1, ratio / 2));
+        const n = PRICE_PALETTE.length - 1;
+        const i = Math.floor(t * n);
+        const f = t * n - i;
+        const c0 = PRICE_PALETTE[Math.min(i, n)];
+        const c1 = PRICE_PALETTE[Math.min(i + 1, n)];
+        return [
+            Math.round(c0[0] + (c1[0] - c0[0]) * f),
+            Math.round(c0[1] + (c1[1] - c0[1]) * f),
+            Math.round(c0[2] + (c1[2] - c0[2]) * f),
+            230
+        ];
+    }
 
     function init() {
         tooltipEl = document.getElementById('tooltip');
@@ -86,12 +109,12 @@ const MapView = (() => {
             getRadius: 5000,
             radiusMinPixels: 2, radiusMaxPixels: 12, radiusUnits: 'meters',
             getFillColor: d => {
-                // Price threshold mode
+                // Price threshold mode — continuous gradient
                 if (usePriceMode) {
                     if (!d[Utils.COL.viable]) return NONVIABLE_COLOR;
                     const cellPrice = d[Utils.COL.pr_min];
                     if (cellPrice == null) return NONVIABLE_COLOR;
-                    return cellPrice <= priceVal ? VIABLE_COLOR : EXPENSIVE_COLOR;
+                    return getPriceColor(cellPrice, priceVal);
                 }
                 // Normal metric mode
                 if (!d[Utils.COL.viable]) return Utils.NON_VIABLE_COLOR;
@@ -129,17 +152,37 @@ const MapView = (() => {
         // Price threshold info
         if (priceThreshold.enabled && viable) {
             const cellPrice = d[Utils.COL.pr_min];
-            const isViableAtPrice = cellPrice != null && cellPrice <= priceThreshold.value;
-            const statusColor = isViableAtPrice ? '#10b981' : '#ef4444';
-            const statusText = isViableAtPrice ? '✓ Viable' : '✗ Too Expensive';
+            const benchmark = priceThreshold.value;
+            const isViable = cellPrice != null && cellPrice <= benchmark;
+            const delta = cellPrice != null ? benchmark - cellPrice : null;
+            let statusColor, statusText;
+            if (cellPrice == null) {
+                statusColor = '#6b7280'; statusText = '— No data';
+            } else if (cellPrice <= benchmark * 0.5) {
+                statusColor = '#059669'; statusText = '✓ Well below benchmark';
+            } else if (cellPrice <= benchmark) {
+                statusColor = '#10b981'; statusText = '✓ Below benchmark';
+            } else if (cellPrice <= benchmark * 1.5) {
+                statusColor = '#f59e0b'; statusText = '⚠ Above benchmark';
+            } else {
+                statusColor = '#dc2626'; statusText = '✗ Well above benchmark';
+            }
             html += `<div class="tooltip-row">
-                <span class="tooltip-label">At $${priceThreshold.value}/ton</span>
+                <span class="tooltip-label">At $${benchmark}/ton</span>
                 <span class="tooltip-val" style="color:${statusColor};font-weight:700;">${statusText}</span>
             </div>`;
             html += `<div class="tooltip-row">
                 <span class="tooltip-label">Break-even (min)</span>
                 <span class="tooltip-val highlight">${Utils.formatMetric(cellPrice, 'pr_min')}</span>
             </div>`;
+            if (delta != null) {
+                const deltaSign = delta >= 0 ? '+' : '';
+                const deltaColor = delta >= 0 ? '#10b981' : '#ef4444';
+                html += `<div class="tooltip-row">
+                    <span class="tooltip-label">Margin</span>
+                    <span class="tooltip-val" style="color:${deltaColor};font-weight:600;">${deltaSign}$${Math.abs(delta).toFixed(0)}/ton</span>
+                </div>`;
+            }
         } else {
             html += `<div class="tooltip-row">
                 <span class="tooltip-label">${getMetricLabel(currentMetric)}${statSuffix}</span>
