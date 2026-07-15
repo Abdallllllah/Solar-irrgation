@@ -17,24 +17,24 @@ const MapView = (() => {
     const SSA_ZOOM = 3.2;
 
     const NONVIABLE_COLOR = [75, 85, 99, 120];     // gray
-    // Continuous price palette: deep green → light green → yellow → orange → red
-    const PRICE_PALETTE = [
-        [5, 150, 105],    // well below benchmark (great)
-        [16, 185, 129],   // below benchmark
-        [250, 204, 21],   // near benchmark
-        [245, 158, 11],   // above benchmark
-        [220, 38, 38]     // well above benchmark (bad)
+    const GHOSTED_COLOR = [75, 85, 99, 35];          // nearly invisible (above benchmark)
+    // Viable price palette: deep green (way below benchmark) → yellow (at benchmark)
+    const PRICE_VIABLE_PALETTE = [
+        [5, 120, 80],     // way below benchmark (best)
+        [5, 150, 105],
+        [16, 185, 129],
+        [52, 211, 153],   // below benchmark
+        [250, 204, 21]    // right at benchmark (barely viable)
     ];
     function getPriceColor(breakeven, benchmark) {
-        // ratio: 0 = free, 1 = exactly at benchmark, 2 = double the benchmark
-        const ratio = breakeven / benchmark;
-        // Map ratio to 0-1 range where 0=great (ratio~0), 0.5=benchmark, 1=bad (ratio≥2)
-        const t = Math.max(0, Math.min(1, ratio / 2));
-        const n = PRICE_PALETTE.length - 1;
+        if (breakeven > benchmark) return GHOSTED_COLOR;
+        // Map 0→benchmark to green→yellow (0 = deep green, benchmark = yellow)
+        const t = Math.max(0, Math.min(1, breakeven / benchmark));
+        const n = PRICE_VIABLE_PALETTE.length - 1;
         const i = Math.floor(t * n);
         const f = t * n - i;
-        const c0 = PRICE_PALETTE[Math.min(i, n)];
-        const c1 = PRICE_PALETTE[Math.min(i + 1, n)];
+        const c0 = PRICE_VIABLE_PALETTE[Math.min(i, n)];
+        const c1 = PRICE_VIABLE_PALETTE[Math.min(i + 1, n)];
         return [
             Math.round(c0[0] + (c1[0] - c0[0]) * f),
             Math.round(c0[1] + (c1[1] - c0[1]) * f),

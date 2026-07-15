@@ -196,10 +196,10 @@ const Controls = (() => {
 
         if (state.priceThreshold.enabled) {
             const bm = state.priceThreshold.value;
-            legendTitle.textContent = `Break-even vs. $${bm}/ton benchmark`;
-            legendGradient.style.background = 'linear-gradient(to right, rgb(5,150,105) 0%, rgb(16,185,129) 25%, rgb(250,204,21) 50%, rgb(245,158,11) 75%, rgb(220,38,38) 100%)';
-            legendMin.textContent = '$0';
-            legendMax.textContent = `$${bm * 2}`;
+            legendTitle.textContent = `Viable cells at $${bm}/ton (by margin)`;
+            legendGradient.style.background = 'linear-gradient(to right, rgb(5,120,80) 0%, rgb(16,185,129) 50%, rgb(250,204,21) 100%)';
+            legendMin.textContent = 'Best margin';
+            legendMax.textContent = 'At benchmark';
         } else {
             let statLabel = '';
             if (cfg.temporal && state.statMode !== 'mean') {
