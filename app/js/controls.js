@@ -195,10 +195,9 @@ const Controls = (() => {
         const legendMax = document.getElementById('legend-max');
 
         if (state.priceThreshold.enabled) {
-            const bm = state.priceThreshold.value;
-            legendTitle.textContent = `Viable cells at $${bm}/ton (by margin)`;
+            legendTitle.textContent = 'Benchmark Comparison (by margin)';
             legendGradient.style.background = 'linear-gradient(to right, rgb(5,120,80) 0%, rgb(16,185,129) 50%, rgb(250,204,21) 100%)';
-            legendMin.textContent = 'Best margin';
+            legendMin.textContent = 'High margin';
             legendMax.textContent = 'At benchmark';
         } else {
             let statLabel = '';
