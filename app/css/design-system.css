@@ -169,6 +169,26 @@ html, body {
     font-size: 9px; color: var(--text-tertiary);
     text-transform: uppercase; letter-spacing: 0.05em;
 }
+.crop-select {
+    display: block;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xs);
+    color: var(--accent-solar);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 8px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+}
+.crop-select:hover { background: rgba(255,255,255,0.1); }
+.crop-select:focus { border-color: var(--accent-primary); }
+.crop-select option {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
 
 /* ---------- Layout ---------- */
 #app-layout {

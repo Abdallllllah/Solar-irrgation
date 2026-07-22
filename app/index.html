@@ -71,8 +71,16 @@
                 <span class="badge-value">40</span>
                 <span class="badge-label">Countries</span>
             </div>
-            <div class="header-badge">
-                <span class="badge-value">Maize</span>
+            <div class="header-badge crop-selector-badge">
+                <select id="crop-select" class="crop-select">
+                    <option value="maize">🌽 Maize</option>
+                    <option value="cassava">🫘 Cassava</option>
+                    <option value="onion">🧅 Onion</option>
+                    <option value="potato">🥔 Potato</option>
+                    <option value="sorghum">🌿 Sorghum</option>
+                    <option value="tomato">🍅 Tomato</option>
+                    <option value="wheat">🌾 Wheat</option>
+                </select>
                 <span class="badge-label">Crop</span>
             </div>
         </div>
@@ -228,9 +236,8 @@
                         </div>
                     </div>
                     <div class="price-legend" id="price-legend" style="display:none;">
-                        <span class="price-legend-item"><span class="swatch swatch-green"></span>Viable ≤ threshold</span>
-                        <span class="price-legend-item"><span class="swatch swatch-red"></span>Too expensive</span>
-                        <span class="price-legend-item"><span class="swatch swatch-gray"></span>Non-viable (∞)</span>
+                        <span class="price-legend-item"><span class="swatch swatch-green"></span>Viable (green = high margin)</span>
+                        <span class="price-legend-item"><span class="swatch swatch-gray"></span>Above benchmark / Non-viable</span>
                     </div>
 
                     <!-- Metric Filters -->
@@ -277,12 +284,12 @@
                             <input type="number" class="filter-max" placeholder="max" step="0.5">
                         </div>
                     </div>
-                    <div class="filter-row" data-filter="cropland">
-                        <span class="filter-label">Cropland (ha)</span>
+                    <div class="filter-row" data-filter="cropland_pct">
+                        <span class="filter-label">Cropland (%)</span>
                         <div class="filter-inputs">
-                            <input type="number" class="filter-min" placeholder="min" step="100">
+                            <input type="number" class="filter-min" placeholder="min" step="5" min="0" max="100">
                             <span class="filter-dash">–</span>
-                            <input type="number" class="filter-max" placeholder="max" step="100">
+                            <input type="number" class="filter-max" placeholder="max" step="5" min="0" max="100">
                         </div>
                     </div>
 

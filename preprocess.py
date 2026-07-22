@@ -1,16 +1,38 @@
 """
-Preprocessing v2: Adds temporal variability statistics (SD, Min, Max)
-for yield gain, irrigation water, and energy requirement.
-Converts maize_crop_data.csv → optimized JSON per FERT level.
+Preprocessing v3: Multi-crop support.
+Usage: python preprocess.py <crop_name>
+Example: python preprocess.py maize
+         python preprocess.py cassava
+If no crop name given, defaults to 'maize'.
+Outputs to app/data/<crop_name>/
 """
 import csv
 import json
 import os
 import math
 import time
+import sys
 
-INPUT_FILE = r'c:\Users\moham\OneDrive\Desktop\Nathan\maize_crop_data.csv'
-OUTPUT_DIR = r'c:\Users\moham\OneDrive\Desktop\Nathan\app\data'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+AVAILABLE_CROPS = ['maize', 'cassava', 'onion', 'potato', 'sorghum', 'tomato', 'wheat']
+
+# Get crop name from CLI argument
+if len(sys.argv) > 1:
+    CROP_NAME = sys.argv[1].lower()
+else:
+    CROP_NAME = 'maize'
+
+if CROP_NAME == 'all':
+    # Will be handled by running this script 7 times
+    print('To process all crops, run: for crop in maize cassava onion potato sorghum tomato wheat; do python preprocess.py $crop; done')
+    sys.exit(0)
+
+if CROP_NAME not in AVAILABLE_CROPS:
+    print(f'Error: Unknown crop "{CROP_NAME}". Available: {AVAILABLE_CROPS}')
+    sys.exit(1)
+
+INPUT_FILE = os.path.join(BASE_DIR, f'{CROP_NAME}_crop_data.csv')
+OUTPUT_DIR = os.path.join(BASE_DIR, 'app', 'data', CROP_NAME)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 YEARS = list(range(2001, 2020))
@@ -43,8 +65,10 @@ def temporal_stats(raw_vals):
     )
 
 print("=" * 50)
-print("PREPROCESSING v2 — with temporal statistics")
+print(f"PREPROCESSING v3 — {CROP_NAME.upper()}")
 print("=" * 50)
+print(f"Input: {INPUT_FILE}")
+print(f"Output: {OUTPUT_DIR}")
 start = time.time()
 
 country_set = {}
@@ -141,7 +165,7 @@ COLUMNS = [
 for fert in FERT_LEVELS:
     fname = os.path.join(OUTPUT_DIR, f'{fert.lower()}.json')
     output = {
-        "crop": "maize",
+        "crop": CROP_NAME,
         "fert": fert,
         "columns": COLUMNS,
         "countries": country_list,
@@ -152,9 +176,18 @@ for fert in FERT_LEVELS:
     size_mb = os.path.getsize(fname) / (1024 * 1024)
     print(f"  Written {fert.lower()}.json ({size_mb:.1f} MB, {len(data_by_fert[fert]):,} cells)")
 
+# Compute dynamic domain for yield gain based on actual data
+all_dy = []
+for fert in FERT_LEVELS:
+    for row in data_by_fert[fert]:
+        dy_val = row[COLUMNS.index('dy')]
+        if dy_val is not None:
+            all_dy.append(dy_val)
+dy_max_rounded = math.ceil(max(all_dy)) if all_dy else 8
+
 # Write index.json with updated metric configs
 index = {
-    "crop": "maize",
+    "crop": CROP_NAME,
     "fert_levels": FERT_LEVELS,
     "columns": COLUMNS,
     "column_labels": {
@@ -186,7 +219,7 @@ index = {
         "irr":     {"label": "Irrigation Water Req.", "unit": "m³/ha/yr", "palette": "blues",   "domain": [0, 800],  "temporal": True},
         "kwh_min": {"label": "Energy Requirement (Min)", "unit": "kWh/ha/yr", "palette": "oranges", "domain": [0, 3000], "temporal": True},
         "kwh_max": {"label": "Energy Requirement (Max)", "unit": "kWh/ha/yr", "palette": "oranges", "domain": [0, 5000], "temporal": True},
-        "dy":      {"label": "Irrigation Yield Gain", "unit": "ton/ha",   "palette": "greens",  "domain": [0, 8],    "temporal": True},
+        "dy":      {"label": "Irrigation Yield Gain", "unit": "ton/ha",   "palette": "greens",  "domain": [0, dy_max_rounded],    "temporal": True},
         "pr_min":  {"label": "Break-even Price (Min)", "unit": "USD/ton",  "palette": "viability","domain": [50, 500], "temporal": False},
         "pr_max":  {"label": "Break-even Price (Max)", "unit": "USD/ton",  "palette": "viability","domain": [50, 800], "temporal": False},
         "srad":    {"label": "Solar Irradiation",    "unit": "kWh/m²/day","palette": "solar",   "domain": [3, 7],    "temporal": False},

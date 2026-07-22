@@ -8,6 +8,7 @@
     let allData = [];
     let filteredData = [];
     let currentFert = 'FERT100';
+    let currentCrop = 'maize';
     let dataCache = {};
 
     const loadingOverlay = document.getElementById('loading-overlay');
@@ -21,14 +22,15 @@
 
     async function boot() {
         updateLoading('Loading configuration...', 5);
-        indexData = await fetchJSON('data/index.json');
+        indexData = await fetchJSON(`data/${currentCrop}/index.json`);
 
         updateLoading('Loading map...', 15);
         MapView.init();
 
         updateLoading('Loading 132,439 grid cells...', 25);
-        const fertData = await fetchJSON(`data/${currentFert.toLowerCase()}.json`);
-        dataCache[currentFert] = fertData;
+        const cacheKey = `${currentCrop}_${currentFert}`;
+        const fertData = await fetchJSON(`data/${currentCrop}/${currentFert.toLowerCase()}.json`);
+        dataCache[cacheKey] = fertData;
         allData = fertData.data;
 
         updateLoading('Processing...', 75);
@@ -38,6 +40,13 @@
             indexData.countries,
             onControlsChange
         );
+
+        // Wire up crop selector
+        const cropSelect = document.getElementById('crop-select');
+        cropSelect.value = currentCrop;
+        cropSelect.addEventListener('change', async (e) => {
+            await switchCrop(e.target.value);
+        });
 
         updateLoading('Rendering...', 90);
         const initialState = Controls.getState();
@@ -52,26 +61,65 @@
             setTimeout(() => { loadingOverlay.style.display = 'none'; }, 600);
         }, 400);
 
-        console.log(`[App] Loaded ${allData.length.toLocaleString()} cells (28 cols) for ${currentFert}`);
+        console.log(`[App] Loaded ${allData.length.toLocaleString()} cells for ${currentCrop}/${currentFert}`);
+    }
+
+    async function switchCrop(cropName) {
+        if (cropName === currentCrop) return;
+        currentCrop = cropName;
+        dataCache = {};  // Clear cache to free memory
+
+        loadingOverlay.style.display = 'flex';
+        loadingOverlay.classList.remove('fade-out');
+        updateLoading(`Loading ${cropName}...`, 20);
+
+        // Reload index for new crop (domains may differ)
+        indexData = await fetchJSON(`data/${currentCrop}/index.json`);
+        Controls.updateConfigs(indexData.metric_configs, indexData.temporal_metrics || {});
+
+        updateLoading(`Loading ${cropName} data...`, 50);
+        const cacheKey = `${currentCrop}_${currentFert}`;
+        const fertData = await fetchJSON(`data/${currentCrop}/${currentFert.toLowerCase()}.json`);
+        dataCache[cacheKey] = fertData;
+        allData = fertData.data;
+
+        updateLoading('Rendering...', 80);
+        const state = Controls.getState();
+        applyFilters(state);
+        const cfg = indexData.metric_configs[state.metric];
+        if (cfg) MapView.setMetric(state.metric, state.statMode, cfg.palette, cfg.domain);
+        MapView.setPriceThreshold(state.priceThreshold);
+        MapView.setFilteredData(filteredData);
+
+        document.getElementById('cell-count').textContent = allData.length.toLocaleString();
+
+        updateLoading('Ready', 100);
+        setTimeout(() => {
+            loadingOverlay.classList.add('fade-out');
+            setTimeout(() => { loadingOverlay.style.display = 'none'; }, 600);
+        }, 200);
+
+        console.log(`[App] Switched to ${currentCrop} — ${allData.length.toLocaleString()} cells`);
     }
 
     async function onControlsChange(state) {
         // FERT change
         if (state.fert !== currentFert) {
             currentFert = state.fert;
-            if (!dataCache[currentFert]) {
+            const cacheKey = `${currentCrop}_${currentFert}`;
+            if (!dataCache[cacheKey]) {
                 loadingOverlay.style.display = 'flex';
                 loadingOverlay.classList.remove('fade-out');
                 updateLoading(`Loading ${currentFert}...`, 30);
-                const fertData = await fetchJSON(`data/${currentFert.toLowerCase()}.json`);
-                dataCache[currentFert] = fertData;
+                const fertData = await fetchJSON(`data/${currentCrop}/${currentFert.toLowerCase()}.json`);
+                dataCache[cacheKey] = fertData;
                 updateLoading('Ready', 100);
                 setTimeout(() => {
                     loadingOverlay.classList.add('fade-out');
                     setTimeout(() => { loadingOverlay.style.display = 'none'; }, 600);
                 }, 200);
             }
-            allData = dataCache[currentFert].data;
+            allData = dataCache[cacheKey].data;
         }
 
         // Apply all filters
@@ -97,7 +145,7 @@
             const regionCountries = new Set(
                 indexData.countries.filter(c => c.region === regionName).map(c => c.name)
             );
-            const currentCountries = dataCache[currentFert]?.countries || [];
+            const currentCountries = dataCache[`${currentCrop}_${currentFert}`]?.countries || [];
             regionCountryIndices = new Set();
             regionCountries.forEach(name => {
                 const idx = currentCountries.indexOf(name);
@@ -108,6 +156,26 @@
         // Build metric filter checks
         const filterChecks = [];
         for (const [metric, range] of Object.entries(state.metricFilters)) {
+            // Handle cropland_pct: convert percentage to hectares (10km cell = 10,000 ha)
+            if (metric === 'cropland_pct') {
+                const colIdx = Utils.COL.cropland;
+                if (colIdx == null) continue;
+                if (range.min != null) {
+                    const minHa = range.min * 100;  // e.g., 50% = 5000 ha
+                    filterChecks.push(row => {
+                        const v = row[colIdx];
+                        return v != null && v >= minHa;
+                    });
+                }
+                if (range.max != null) {
+                    const maxHa = range.max * 100;
+                    filterChecks.push(row => {
+                        const v = row[colIdx];
+                        return v != null && v <= maxHa;
+                    });
+                }
+                continue;
+            }
             const colIdx = Utils.COL[metric];
             if (colIdx == null) continue;
             if (range.min != null) filterChecks.push(row => {
@@ -158,7 +226,7 @@
 
     function findCountryIndex(name) {
         if (name === 'all') return null;
-        const countries = dataCache[currentFert]?.countries || [];
+        const countries = dataCache[`${currentCrop}_${currentFert}`]?.countries || [];
         const idx = countries.indexOf(name);
         return idx >= 0 ? idx : null;
     }

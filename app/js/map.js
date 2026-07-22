@@ -204,7 +204,11 @@ const MapView = (() => {
 
         // Other stats
         const others = [];
-        if (currentMetric !== 'cropland') others.push(['Cropland', Utils.formatMetric(d[Utils.COL.cropland], 'cropland')]);
+        if (currentMetric !== 'cropland') {
+            const clHa = d[Utils.COL.cropland];
+            const clPct = clHa != null ? (clHa / 100).toFixed(1) + '%' : 'N/A';
+            others.push(['Cropland', clPct]);
+        }
         if (currentMetric !== 'dy') others.push(['Yield Gain', Utils.formatMetric(d[Utils.COL.dy], 'dy')]);
         if (currentMetric !== 'irr') others.push(['Water Req.', Utils.formatMetric(d[Utils.COL.irr], 'irr')]);
         if (currentMetric !== 'srad') others.push(['Solar Rad.', Utils.formatMetric(d[Utils.COL.srad], 'srad')]);

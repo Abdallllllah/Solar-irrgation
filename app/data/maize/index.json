@@ -1,0 +1,823 @@
+{
+  "crop": "maize",
+  "fert_levels": [
+    "FERT100",
+    "FERT85",
+    "FERT50",
+    "FERT25"
+  ],
+  "columns": [
+    "lon",
+    "lat",
+    "cropland",
+    "dtw_min",
+    "dtw_max",
+    "elev",
+    "srad",
+    "pv_kw",
+    "gwp_min",
+    "gwp_max",
+    "irr",
+    "irr_sd",
+    "irr_lo",
+    "irr_hi",
+    "kwh_min",
+    "kwh_min_sd",
+    "kwh_min_lo",
+    "kwh_min_hi",
+    "kwh_max",
+    "kwh_max_sd",
+    "kwh_max_lo",
+    "kwh_max_hi",
+    "dy",
+    "dy_sd",
+    "dy_lo",
+    "dy_hi",
+    "pr_min",
+    "pr_max",
+    "viable",
+    "ci"
+  ],
+  "column_labels": {
+    "lon": "Longitude",
+    "lat": "Latitude",
+    "cropland": "Cropland (ha)",
+    "dtw_min": "Depth to Water - Deep Estimate (m)",
+    "dtw_max": "Depth to Water - Shallow Estimate (m)",
+    "elev": "Elevation (m)",
+    "srad": "Solar Irradiation (kWh/m\u00b2/day)",
+    "pv_kw": "PV Size (kWp/ha)",
+    "gwp_min": "GW Productivity - Low (L/s)",
+    "gwp_max": "GW Productivity - High (L/s)",
+    "irr": "Irrigation Water Req. (m\u00b3/ha/yr)",
+    "irr_sd": "Irrigation Water Req. SD",
+    "irr_lo": "Irrigation Water Req. Min",
+    "irr_hi": "Irrigation Water Req. Max",
+    "kwh_min": "Energy Req. Min (kWh/ha/yr)",
+    "kwh_min_sd": "Energy Req. Min SD",
+    "kwh_min_lo": "Energy Req. Min - Lowest",
+    "kwh_min_hi": "Energy Req. Min - Highest",
+    "kwh_max": "Energy Req. Max (kWh/ha/yr)",
+    "kwh_max_sd": "Energy Req. Max SD",
+    "kwh_max_lo": "Energy Req. Max - Lowest",
+    "kwh_max_hi": "Energy Req. Max - Highest",
+    "dy": "Yield Gain (ton/ha)",
+    "dy_sd": "Yield Gain SD",
+    "dy_lo": "Yield Gain Min",
+    "dy_hi": "Yield Gain Max",
+    "pr_min": "Break-even Price Min (USD/ton)",
+    "pr_max": "Break-even Price Max (USD/ton)",
+    "viable": "Economically Viable",
+    "ci": "Country Index"
+  },
+  "temporal_metrics": {
+    "dy": {
+      "base": "dy",
+      "sd": "dy_sd",
+      "lo": "dy_lo",
+      "hi": "dy_hi"
+    },
+    "irr": {
+      "base": "irr",
+      "sd": "irr_sd",
+      "lo": "irr_lo",
+      "hi": "irr_hi"
+    },
+    "kwh_min": {
+      "base": "kwh_min",
+      "sd": "kwh_min_sd",
+      "lo": "kwh_min_lo",
+      "hi": "kwh_min_hi"
+    },
+    "kwh_max": {
+      "base": "kwh_max",
+      "sd": "kwh_max_sd",
+      "lo": "kwh_max_lo",
+      "hi": "kwh_max_hi"
+    }
+  },
+  "metric_configs": {
+    "irr": {
+      "label": "Irrigation Water Req.",
+      "unit": "m\u00b3/ha/yr",
+      "palette": "blues",
+      "domain": [
+        0,
+        800
+      ],
+      "temporal": true
+    },
+    "kwh_min": {
+      "label": "Energy Requirement (Min)",
+      "unit": "kWh/ha/yr",
+      "palette": "oranges",
+      "domain": [
+        0,
+        3000
+      ],
+      "temporal": true
+    },
+    "kwh_max": {
+      "label": "Energy Requirement (Max)",
+      "unit": "kWh/ha/yr",
+      "palette": "oranges",
+      "domain": [
+        0,
+        5000
+      ],
+      "temporal": true
+    },
+    "dy": {
+      "label": "Irrigation Yield Gain",
+      "unit": "ton/ha",
+      "palette": "greens",
+      "domain": [
+        0,
+        9
+      ],
+      "temporal": true
+    },
+    "pr_min": {
+      "label": "Break-even Price (Min)",
+      "unit": "USD/ton",
+      "palette": "viability",
+      "domain": [
+        50,
+        500
+      ],
+      "temporal": false
+    },
+    "pr_max": {
+      "label": "Break-even Price (Max)",
+      "unit": "USD/ton",
+      "palette": "viability",
+      "domain": [
+        50,
+        800
+      ],
+      "temporal": false
+    },
+    "srad": {
+      "label": "Solar Irradiation",
+      "unit": "kWh/m\u00b2/day",
+      "palette": "solar",
+      "domain": [
+        3,
+        7
+      ],
+      "temporal": false
+    },
+    "cropland": {
+      "label": "Cropland Area",
+      "unit": "ha",
+      "palette": "greens",
+      "domain": [
+        0,
+        9000
+      ],
+      "temporal": false
+    },
+    "elev": {
+      "label": "Elevation",
+      "unit": "m",
+      "palette": "terrain",
+      "domain": [
+        0,
+        3000
+      ],
+      "temporal": false
+    },
+    "dtw_min": {
+      "label": "Depth to Groundwater",
+      "unit": "m",
+      "palette": "depth",
+      "domain": [
+        0,
+        500
+      ],
+      "temporal": false
+    },
+    "gwp_max": {
+      "label": "GW Productivity",
+      "unit": "L/s",
+      "palette": "blues",
+      "domain": [
+        0,
+        20
+      ],
+      "temporal": false
+    },
+    "pv_kw": {
+      "label": "PV System Size",
+      "unit": "kWp/ha",
+      "palette": "solar",
+      "domain": [
+        0,
+        4
+      ],
+      "temporal": false
+    }
+  },
+  "countries": [
+    {
+      "name": "Angola",
+      "region": "Southern_Africa",
+      "cells": 8620,
+      "bounds": [
+        [
+          11.958,
+          -17.958
+        ],
+        [
+          24.042,
+          -4.458
+        ]
+      ]
+    },
+    {
+      "name": "Benin",
+      "region": "West_Africa",
+      "cells": 1163,
+      "bounds": [
+        [
+          0.792,
+          6.375
+        ],
+        [
+          3.792,
+          12.375
+        ]
+      ]
+    },
+    {
+      "name": "Botswana",
+      "region": "Southern_Africa",
+      "cells": 2011,
+      "bounds": [
+        [
+          20.125,
+          -25.792
+        ],
+        [
+          29.125,
+          -17.792
+        ]
+      ]
+    },
+    {
+      "name": "Burkina Faso",
+      "region": "West_Africa",
+      "cells": 3055,
+      "bounds": [
+        [
+          -5.458,
+          9.458
+        ],
+        [
+          2.208,
+          15.042
+        ]
+      ]
+    },
+    {
+      "name": "Burundi",
+      "region": "Eastern_Africa",
+      "cells": 297,
+      "bounds": [
+        [
+          29.042,
+          -4.458
+        ],
+        [
+          30.792,
+          -2.375
+        ]
+      ]
+    },
+    {
+      "name": "Cameroon",
+      "region": "Central_Africa",
+      "cells": 3289,
+      "bounds": [
+        [
+          8.542,
+          1.792
+        ],
+        [
+          16.125,
+          13.042
+        ]
+      ]
+    },
+    {
+      "name": "Central African Republic",
+      "region": "Central_Africa",
+      "cells": 1833,
+      "bounds": [
+        [
+          14.542,
+          2.708
+        ],
+        [
+          27.208,
+          10.958
+        ]
+      ]
+    },
+    {
+      "name": "Chad",
+      "region": "Central_Africa",
+      "cells": 4574,
+      "bounds": [
+        [
+          13.625,
+          7.458
+        ],
+        [
+          22.958,
+          21.792
+        ]
+      ]
+    },
+    {
+      "name": "Congo",
+      "region": "Central_Africa",
+      "cells": 1966,
+      "bounds": [
+        [
+          11.292,
+          -4.958
+        ],
+        [
+          18.625,
+          3.625
+        ]
+      ]
+    },
+    {
+      "name": "DRC",
+      "region": "Central_Africa",
+      "cells": 20462,
+      "bounds": [
+        [
+          12.375,
+          -13.375
+        ],
+        [
+          31.292,
+          5.125
+        ]
+      ]
+    },
+    {
+      "name": "Eritrea",
+      "region": "Eastern_Africa",
+      "cells": 334,
+      "bounds": [
+        [
+          36.542,
+          13.542
+        ],
+        [
+          41.625,
+          17.375
+        ]
+      ]
+    },
+    {
+      "name": "Ethiopia",
+      "region": "Eastern_Africa",
+      "cells": 7011,
+      "bounds": [
+        [
+          33.042,
+          3.458
+        ],
+        [
+          43.875,
+          14.792
+        ]
+      ]
+    },
+    {
+      "name": "Gabon",
+      "region": "Central_Africa",
+      "cells": 821,
+      "bounds": [
+        [
+          9.042,
+          -3.958
+        ],
+        [
+          14.458,
+          2.292
+        ]
+      ]
+    },
+    {
+      "name": "Gambia",
+      "region": "West_Africa",
+      "cells": 113,
+      "bounds": [
+        [
+          -16.625,
+          13.208
+        ],
+        [
+          -13.875,
+          13.792
+        ]
+      ]
+    },
+    {
+      "name": "Ghana",
+      "region": "West_Africa",
+      "cells": 2591,
+      "bounds": [
+        [
+          -3.208,
+          4.792
+        ],
+        [
+          1.125,
+          11.125
+        ]
+      ]
+    },
+    {
+      "name": "Guinea",
+      "region": "West_Africa",
+      "cells": 2169,
+      "bounds": [
+        [
+          -14.958,
+          7.542
+        ],
+        [
+          -7.958,
+          12.625
+        ]
+      ]
+    },
+    {
+      "name": "Guinea-Bissau",
+      "region": "West_Africa",
+      "cells": 279,
+      "bounds": [
+        [
+          -16.458,
+          11.042
+        ],
+        [
+          -13.708,
+          12.625
+        ]
+      ]
+    },
+    {
+      "name": "Ivory Coast",
+      "region": "West_Africa",
+      "cells": 3467,
+      "bounds": [
+        [
+          -8.458,
+          4.375
+        ],
+        [
+          -2.542,
+          10.708
+        ]
+      ]
+    },
+    {
+      "name": "Kenya",
+      "region": "Eastern_Africa",
+      "cells": 2125,
+      "bounds": [
+        [
+          34.042,
+          -4.625
+        ],
+        [
+          41.792,
+          4.625
+        ]
+      ]
+    },
+    {
+      "name": "Lesotho",
+      "region": "Southern_Africa",
+      "cells": 364,
+      "bounds": [
+        [
+          27.125,
+          -30.625
+        ],
+        [
+          29.375,
+          -28.625
+        ]
+      ]
+    },
+    {
+      "name": "Liberia",
+      "region": "West_Africa",
+      "cells": 493,
+      "bounds": [
+        [
+          -11.375,
+          4.375
+        ],
+        [
+          -7.458,
+          8.458
+        ]
+      ]
+    },
+    {
+      "name": "Malawi",
+      "region": "Southern_Africa",
+      "cells": 1062,
+      "bounds": [
+        [
+          32.708,
+          -17.125
+        ],
+        [
+          35.875,
+          -9.458
+        ]
+      ]
+    },
+    {
+      "name": "Mali",
+      "region": "West_Africa",
+      "cells": 3385,
+      "bounds": [
+        [
+          -12.208,
+          10.208
+        ],
+        [
+          3.875,
+          23.625
+        ]
+      ]
+    },
+    {
+      "name": "Mozambique",
+      "region": "Southern_Africa",
+      "cells": 6285,
+      "bounds": [
+        [
+          30.292,
+          -26.792
+        ],
+        [
+          40.792,
+          -10.625
+        ]
+      ]
+    },
+    {
+      "name": "Namibia",
+      "region": "Southern_Africa",
+      "cells": 2039,
+      "bounds": [
+        [
+          13.875,
+          -28.958
+        ],
+        [
+          25.125,
+          -17.375
+        ]
+      ]
+    },
+    {
+      "name": "Niger",
+      "region": "West_Africa",
+      "cells": 2783,
+      "bounds": [
+        [
+          0.208,
+          11.792
+        ],
+        [
+          13.625,
+          19.792
+        ]
+      ]
+    },
+    {
+      "name": "Nigeria",
+      "region": "West_Africa",
+      "cells": 10133,
+      "bounds": [
+        [
+          2.708,
+          4.375
+        ],
+        [
+          14.625,
+          13.792
+        ]
+      ]
+    },
+    {
+      "name": "Rwanda",
+      "region": "Eastern_Africa",
+      "cells": 288,
+      "bounds": [
+        [
+          28.875,
+          -2.792
+        ],
+        [
+          30.875,
+          -1.125
+        ]
+      ]
+    },
+    {
+      "name": "Senegal",
+      "region": "West_Africa",
+      "cells": 1107,
+      "bounds": [
+        [
+          -17.292,
+          12.375
+        ],
+        [
+          -12.458,
+          16.625
+        ]
+      ]
+    },
+    {
+      "name": "SierraLeone",
+      "region": "West_Africa",
+      "cells": 729,
+      "bounds": [
+        [
+          -13.208,
+          6.958
+        ],
+        [
+          -10.292,
+          9.958
+        ]
+      ]
+    },
+    {
+      "name": "Somalia",
+      "region": "Eastern_Africa",
+      "cells": 1377,
+      "bounds": [
+        [
+          41.208,
+          -1.542
+        ],
+        [
+          48.958,
+          10.708
+        ]
+      ]
+    },
+    {
+      "name": "South Africa",
+      "region": "Southern_Africa",
+      "cells": 10616,
+      "bounds": [
+        [
+          16.625,
+          -34.792
+        ],
+        [
+          32.792,
+          -22.208
+        ]
+      ]
+    },
+    {
+      "name": "South Sudan",
+      "region": "Eastern_Africa",
+      "cells": 2099,
+      "bounds": [
+        [
+          24.792,
+          3.542
+        ],
+        [
+          34.458,
+          12.208
+        ]
+      ]
+    },
+    {
+      "name": "Sudan",
+      "region": "Eastern_Africa",
+      "cells": 8,
+      "bounds": [
+        [
+          24.875,
+          9.875
+        ],
+        [
+          36.375,
+          13.542
+        ]
+      ]
+    },
+    {
+      "name": "Swaziland",
+      "region": "Southern_Africa",
+      "cells": 226,
+      "bounds": [
+        [
+          30.792,
+          -27.292
+        ],
+        [
+          32.125,
+          -25.792
+        ]
+      ]
+    },
+    {
+      "name": "Tanzania",
+      "region": "Eastern_Africa",
+      "cells": 8878,
+      "bounds": [
+        [
+          29.625,
+          -11.708
+        ],
+        [
+          40.375,
+          -1.042
+        ]
+      ]
+    },
+    {
+      "name": "Togo",
+      "region": "West_Africa",
+      "cells": 635,
+      "bounds": [
+        [
+          -0.125,
+          6.208
+        ],
+        [
+          1.708,
+          11.125
+        ]
+      ]
+    },
+    {
+      "name": "Uganda",
+      "region": "Eastern_Africa",
+      "cells": 2373,
+      "bounds": [
+        [
+          29.625,
+          -1.458
+        ],
+        [
+          34.958,
+          4.125
+        ]
+      ]
+    },
+    {
+      "name": "Zambia",
+      "region": "Southern_Africa",
+      "cells": 7480,
+      "bounds": [
+        [
+          22.042,
+          -18.042
+        ],
+        [
+          33.625,
+          -8.292
+        ]
+      ]
+    },
+    {
+      "name": "Zimbabwe",
+      "region": "Southern_Africa",
+      "cells": 3899,
+      "bounds": [
+        [
+          25.292,
+          -22.375
+        ],
+        [
+          33.042,
+          -15.625
+        ]
+      ]
+    }
+  ]
+}

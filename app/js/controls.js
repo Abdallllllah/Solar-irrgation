@@ -239,5 +239,11 @@ const Controls = (() => {
     function getState() { return { ...state, priceThreshold: { ...state.priceThreshold }, metricFilters: { ...state.metricFilters } }; }
     function fireChange() { if (onChangeCallback) onChangeCallback(getState()); }
 
-    return { init, getState, updateStats, updateCounts, updateFilterMatch, updateLegend };
+    function updateConfigs(configs, temporal) {
+        metricConfigs = configs;
+        temporalMetrics = temporal;
+        updateLegend();
+    }
+
+    return { init, getState, updateStats, updateCounts, updateFilterMatch, updateLegend, updateConfigs };
 })();
