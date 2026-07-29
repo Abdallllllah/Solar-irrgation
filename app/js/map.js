@@ -1,5 +1,5 @@
 /**
- * map.js v3 — With price threshold binary coloring mode
+ * map.js v4 — With click-to-compare support
  */
 const MapView = (() => {
     let map = null;
@@ -9,39 +9,14 @@ const MapView = (() => {
     let currentStatMode = 'mean';
     let currentPalette = 'greens';
     let currentDomain = [0, 8];
-    let priceThreshold = { enabled: false, value: 200 };
     let countries = [];
     let tooltipEl = null;
+    let onCellClick = null;
 
     const SSA_CENTER = [20, -2];
     const SSA_ZOOM = 3.2;
 
     const NONVIABLE_COLOR = [75, 85, 99, 120];     // gray
-    const GHOSTED_COLOR = [75, 85, 99, 35];          // nearly invisible (above benchmark)
-    // Viable price palette: deep green (way below benchmark) → yellow (at benchmark)
-    const PRICE_VIABLE_PALETTE = [
-        [5, 120, 80],     // way below benchmark (best)
-        [5, 150, 105],
-        [16, 185, 129],
-        [52, 211, 153],   // below benchmark
-        [250, 204, 21]    // right at benchmark (barely viable)
-    ];
-    function getPriceColor(breakeven, benchmark) {
-        if (breakeven > benchmark) return GHOSTED_COLOR;
-        // Map 0→benchmark to green→yellow (0 = deep green, benchmark = yellow)
-        const t = Math.max(0, Math.min(1, breakeven / benchmark));
-        const n = PRICE_VIABLE_PALETTE.length - 1;
-        const i = Math.floor(t * n);
-        const f = t * n - i;
-        const c0 = PRICE_VIABLE_PALETTE[Math.min(i, n)];
-        const c1 = PRICE_VIABLE_PALETTE[Math.min(i + 1, n)];
-        return [
-            Math.round(c0[0] + (c1[0] - c0[0]) * f),
-            Math.round(c0[1] + (c1[1] - c0[1]) * f),
-            Math.round(c0[2] + (c1[2] - c0[2]) * f),
-            230
-        ];
-    }
 
     function init() {
         tooltipEl = document.getElementById('tooltip');
@@ -75,10 +50,7 @@ const MapView = (() => {
         updateLayer();
     }
 
-    function setPriceThreshold(pt) {
-        priceThreshold = pt;
-        updateLayer();
-    }
+    function setOnCellClick(cb) { onCellClick = cb; }
 
     function updateLayer() {
         const resolvedCol = Utils.resolveColumn(currentMetric, currentStatMode);
@@ -99,9 +71,6 @@ const MapView = (() => {
         const effectiveRange = effectiveMax - effectiveMin || 1;
         const effectivePalette = currentStatMode === 'sd' ? 'variance' : currentPalette;
 
-        const usePriceMode = priceThreshold.enabled;
-        const priceVal = priceThreshold.value;
-
         const layer = new deck.ScatterplotLayer({
             id: 'grid-cells',
             data: filteredData,
@@ -109,14 +78,6 @@ const MapView = (() => {
             getRadius: 5000,
             radiusMinPixels: 2, radiusMaxPixels: 12, radiusUnits: 'meters',
             getFillColor: d => {
-                // Price threshold mode — continuous gradient
-                if (usePriceMode) {
-                    if (!d[Utils.COL.viable]) return NONVIABLE_COLOR;
-                    const cellPrice = d[Utils.COL.pr_min];
-                    if (cellPrice == null) return NONVIABLE_COLOR;
-                    return getPriceColor(cellPrice, priceVal);
-                }
-                // Normal metric mode
                 if (!d[Utils.COL.viable]) return Utils.NON_VIABLE_COLOR;
                 const val = d[colIdx];
                 if (val == null) return Utils.NON_VIABLE_COLOR;
@@ -125,8 +86,14 @@ const MapView = (() => {
             },
             pickable: true,
             onHover: onHover,
+            onClick: (info) => {
+                if (info.object && onCellClick) {
+                    const idx = filteredData.indexOf(info.object);
+                    onCellClick(info.object, idx, info);
+                }
+            },
             updateTriggers: {
-                getFillColor: [currentMetric, currentStatMode, currentPalette, currentDomain, usePriceMode, priceVal]
+                getFillColor: [currentMetric, currentStatMode, currentPalette, currentDomain]
             },
             transitions: { getFillColor: { duration: 300 } }
         });
@@ -149,46 +116,11 @@ const MapView = (() => {
             &nbsp;·&nbsp;${d[Utils.COL.lon].toFixed(2)}°, ${d[Utils.COL.lat].toFixed(2)}°
         </div>`;
 
-        // Price threshold info
-        if (priceThreshold.enabled && viable) {
-            const cellPrice = d[Utils.COL.pr_min];
-            const benchmark = priceThreshold.value;
-            const isViable = cellPrice != null && cellPrice <= benchmark;
-            const delta = cellPrice != null ? benchmark - cellPrice : null;
-            let statusColor, statusText;
-            if (cellPrice == null) {
-                statusColor = '#6b7280'; statusText = '— No data';
-            } else if (cellPrice <= benchmark * 0.5) {
-                statusColor = '#059669'; statusText = '✓ Well below benchmark';
-            } else if (cellPrice <= benchmark) {
-                statusColor = '#10b981'; statusText = '✓ Below benchmark';
-            } else if (cellPrice <= benchmark * 1.5) {
-                statusColor = '#f59e0b'; statusText = '⚠ Above benchmark';
-            } else {
-                statusColor = '#dc2626'; statusText = '✗ Well above benchmark';
-            }
-            html += `<div class="tooltip-row">
-                <span class="tooltip-label">At $${benchmark}/ton</span>
-                <span class="tooltip-val" style="color:${statusColor};font-weight:700;">${statusText}</span>
-            </div>`;
-            html += `<div class="tooltip-row">
-                <span class="tooltip-label">Break-even (min)</span>
-                <span class="tooltip-val highlight">${Utils.formatMetric(cellPrice, 'pr_min')}</span>
-            </div>`;
-            if (delta != null) {
-                const deltaSign = delta >= 0 ? '+' : '';
-                const deltaColor = delta >= 0 ? '#10b981' : '#ef4444';
-                html += `<div class="tooltip-row">
-                    <span class="tooltip-label">Margin</span>
-                    <span class="tooltip-val" style="color:${deltaColor};font-weight:600;">${deltaSign}$${Math.abs(delta).toFixed(0)}/ton</span>
-                </div>`;
-            }
-        } else {
-            html += `<div class="tooltip-row">
-                <span class="tooltip-label">${getMetricLabel(currentMetric)}${statSuffix}</span>
-                <span class="tooltip-val highlight">${Utils.formatMetric(metricVal, currentMetric)}</span>
-            </div>`;
-        }
+        // Primary metric
+        html += `<div class="tooltip-row">
+            <span class="tooltip-label">${getMetricLabel(currentMetric)}${statSuffix}</span>
+            <span class="tooltip-val highlight">${Utils.formatMetric(metricVal, currentMetric)}</span>
+        </div>`;
 
         // Temporal variability section
         const temporalBase = ['dy', 'irr', 'kwh_min', 'kwh_max'];
@@ -213,7 +145,7 @@ const MapView = (() => {
         if (currentMetric !== 'irr') others.push(['Water Req.', Utils.formatMetric(d[Utils.COL.irr], 'irr')]);
         if (currentMetric !== 'srad') others.push(['Solar Rad.', Utils.formatMetric(d[Utils.COL.srad], 'srad')]);
         if (currentMetric !== 'gwp_max') others.push(['GW Yield', Utils.formatMetric(d[Utils.COL.gwp_max], 'gwp_max')]);
-        if (viable && !priceThreshold.enabled) {
+        if (viable) {
             others.push(['Price (min)', Utils.formatMetric(d[Utils.COL.pr_min], 'pr_min')]);
             others.push(['Price (max)', Utils.formatMetric(d[Utils.COL.pr_max], 'pr_max')]);
         }
@@ -247,5 +179,5 @@ const MapView = (() => {
         map.flyTo({ center: SSA_CENTER, zoom: SSA_ZOOM, duration: 1500 });
     }
 
-    return { init, setData, setFilteredData, setMetric, setPriceThreshold, flyToCountry, flyToAll, updateLayer };
+    return { init, setData, setFilteredData, setMetric, setOnCellClick, flyToCountry, flyToAll, updateLayer };
 })();

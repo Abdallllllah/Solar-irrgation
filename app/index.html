@@ -222,26 +222,7 @@
                     <span class="panel-title">Investment Analysis</span>
                 </div>
                 <div class="panel-body">
-                    <!-- Price Threshold -->
-                    <label class="toggle-row">
-                        <input type="checkbox" id="price-threshold-toggle">
-                        <span class="toggle-slider"></span>
-                        <span class="toggle-label">Benchmark Price Mode</span>
-                    </label>
-                    <div class="price-controls" id="price-controls">
-                        <input type="range" id="price-slider" min="50" max="800" value="200" step="10" class="price-range">
-                        <div class="price-display">
-                            <input type="number" id="price-value" value="200" min="50" max="800" class="price-number-input">
-                            <span class="price-unit">USD/ton</span>
-                        </div>
-                    </div>
-                    <div class="price-legend" id="price-legend" style="display:none;">
-                        <span class="price-legend-item"><span class="swatch swatch-green"></span>Viable (green = high margin)</span>
-                        <span class="price-legend-item"><span class="swatch swatch-gray"></span>Above benchmark / Non-viable</span>
-                    </div>
-
                     <!-- Metric Filters -->
-                    <div class="filter-divider"></div>
                     <div class="filter-section-title">Filter by Range</div>
 
                     <div class="filter-row" data-filter="dy">
@@ -352,6 +333,31 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Country Summary -->
+            <div class="panel" id="panel-country-summary">
+                <div class="panel-header panel-header-toggle" id="country-summary-toggle">
+                    <span class="panel-icon">🌍</span>
+                    <span class="panel-title">Country Summary</span>
+                    <span class="panel-chevron" id="country-summary-chevron">▾</span>
+                </div>
+                <div class="panel-body country-summary-body" id="country-summary-body" style="display:none;">
+                    <div class="country-table-wrap">
+                        <table class="country-table" id="country-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="name" class="sortable sorted-asc">Country</th>
+                                    <th data-sort="cells" class="sortable num">Cells</th>
+                                    <th data-sort="viable" class="sortable num">Viable%</th>
+                                    <th data-sort="dy" class="sortable num">Yield</th>
+                                    <th data-sort="pr" class="sortable num">B.E.$</th>
+                                </tr>
+                            </thead>
+                            <tbody id="country-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </aside>
 
         <!-- Map Container -->
@@ -362,10 +368,40 @@
         </main>
     </div>
 
+    <!-- Compare Panel (slides from right) -->
+    <div id="compare-panel" class="compare-panel">
+        <div class="compare-header">
+            <div class="compare-title">
+                <span class="compare-icon">📊</span>
+                <span>Cross-Crop Comparison</span>
+            </div>
+            <button id="compare-close" class="compare-close">✕</button>
+        </div>
+        <div class="compare-location" id="compare-location"></div>
+        <div class="compare-body" id="compare-body">
+            <div class="compare-section">
+                <div class="compare-section-title">Yield Gain (t/ha)</div>
+                <div class="compare-chart" id="chart-dy"></div>
+            </div>
+            <div class="compare-section">
+                <div class="compare-section-title">Break-even Price ($/ton)</div>
+                <div class="compare-chart" id="chart-pr"></div>
+            </div>
+            <div class="compare-section">
+                <div class="compare-section-title">Water Requirement (m³/ha)</div>
+                <div class="compare-chart" id="chart-irr"></div>
+            </div>
+            <div class="compare-shared" id="compare-shared"></div>
+        </div>
+        <div class="compare-hint">Click any cell on the map to compare crops</div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/utils.js"></script>
     <script src="js/map.js"></script>
     <script src="js/controls.js"></script>
+    <script src="js/country-summary.js"></script>
+    <script src="js/compare.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

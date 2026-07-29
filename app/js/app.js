@@ -1,5 +1,5 @@
 /**
- * app.js v3 — With price threshold + combined metric filters
+ * app.js v4 — Multi-crop + click-to-compare
  */
 (async function App() {
     'use strict';
@@ -48,6 +48,16 @@
             await switchCrop(e.target.value);
         });
 
+        // Wire up click-to-compare
+        Compare.init();
+        CountrySummary.init(indexData.countries);
+        MapView.setOnCellClick((cellData, cellIndex, info) => {
+            // Find the cell index in the FULL dataset (allData), not filtered
+            const fullIndex = allData.indexOf(cellData);
+            const countryName = fertData.countries[cellData[Utils.COL.ci]] || 'Unknown';
+            Compare.showCell(fullIndex >= 0 ? fullIndex : cellIndex, cellData, countryName);
+        });
+
         updateLoading('Rendering...', 90);
         const initialState = Controls.getState();
         applyFilters(initialState);
@@ -88,7 +98,6 @@
         applyFilters(state);
         const cfg = indexData.metric_configs[state.metric];
         if (cfg) MapView.setMetric(state.metric, state.statMode, cfg.palette, cfg.domain);
-        MapView.setPriceThreshold(state.priceThreshold);
         MapView.setFilteredData(filteredData);
 
         document.getElementById('cell-count').textContent = allData.length.toLocaleString();
@@ -125,12 +134,11 @@
         // Apply all filters
         applyFilters(state);
 
-        // Update map metric + price threshold
+        // Update map metric
         const cfg = indexData.metric_configs[state.metric];
         if (cfg) {
             MapView.setMetric(state.metric, state.statMode, cfg.palette, cfg.domain);
         }
-        MapView.setPriceThreshold(state.priceThreshold);
         MapView.setFilteredData(filteredData);
 
         handleFlyTo(state);
@@ -222,6 +230,10 @@
 
         // Filter match count
         Controls.updateFilterMatch(filteredData.length, totalBeforeMetricFilters);
+
+        // Update country summary table
+        const countryNames = dataCache[`${currentCrop}_${currentFert}`]?.countries || [];
+        CountrySummary.update(filteredData, countryNames);
     }
 
     function findCountryIndex(name) {

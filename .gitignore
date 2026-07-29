@@ -1,9 +1,10 @@
 # Raw data (too large for GitHub)
-maize_crop_data.csv
+*_crop_data.csv
 
 # Scratch/temp scripts
 analyze_data.py
 deep_analysis.py
+analyze_all_crops.py
 
 # Word docs
 *.docx
@@ -11,6 +12,9 @@ deep_analysis.py
 # OS files
 Thumbs.db
 .DS_Store
+
+# Large data / Shapefiles
+Road predictions/
 
 # Python
 __pycache__/

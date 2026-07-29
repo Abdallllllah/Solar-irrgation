@@ -1,5 +1,5 @@
 /**
- * controls.js v3 — With price threshold + metric range filters
+ * controls.js v4 — With metric range filters (no benchmark slider)
  */
 const Controls = (() => {
     let state = {
@@ -10,7 +10,6 @@ const Controls = (() => {
         region: 'all',
         showViable: true,
         showNonViable: true,
-        priceThreshold: { enabled: false, value: 200 },
         metricFilters: {}
     };
 
@@ -28,7 +27,6 @@ const Controls = (() => {
         setupFertSelector();
         setupCountrySelector(countries);
         setupViabilityToggles();
-        setupPriceThreshold();
         setupMetricFilters();
         updateLegend();
         updateStatModeVisibility();
@@ -127,37 +125,7 @@ const Controls = (() => {
         });
     }
 
-    // ---- Price Threshold ----
-    function setupPriceThreshold() {
-        const toggle = document.getElementById('price-threshold-toggle');
-        const slider = document.getElementById('price-slider');
-        const numberInput = document.getElementById('price-value');
-        const controls = document.getElementById('price-controls');
-        const legend = document.getElementById('price-legend');
 
-        toggle.addEventListener('change', () => {
-            state.priceThreshold.enabled = toggle.checked;
-            controls.classList.toggle('enabled', toggle.checked);
-            legend.style.display = toggle.checked ? 'flex' : 'none';
-            updateLegend();
-            fireChange();
-        });
-
-        slider.addEventListener('input', () => {
-            state.priceThreshold.value = parseInt(slider.value);
-            numberInput.value = slider.value;
-            fireChange();
-        });
-
-        numberInput.addEventListener('change', () => {
-            let v = parseInt(numberInput.value);
-            v = Math.max(50, Math.min(800, v || 200));
-            numberInput.value = v;
-            slider.value = v;
-            state.priceThreshold.value = v;
-            fireChange();
-        });
-    }
 
     // ---- Metric Range Filters ----
     function setupMetricFilters() {
@@ -194,26 +162,19 @@ const Controls = (() => {
         const legendMin = document.getElementById('legend-min');
         const legendMax = document.getElementById('legend-max');
 
-        if (state.priceThreshold.enabled) {
-            legendTitle.textContent = 'Benchmark Comparison (by margin)';
-            legendGradient.style.background = 'linear-gradient(to right, rgb(5,120,80) 0%, rgb(16,185,129) 50%, rgb(250,204,21) 100%)';
-            legendMin.textContent = 'High margin';
-            legendMax.textContent = 'At benchmark';
+        let statLabel = '';
+        if (cfg.temporal && state.statMode !== 'mean') {
+            statLabel = ` — ${{ sd: 'Std. Dev', min: 'Minimum', max: 'Maximum' }[state.statMode]}`;
+        }
+        legendTitle.textContent = `${cfg.label}${statLabel} (${cfg.unit})`;
+        const palette = (state.statMode === 'sd') ? 'variance' : cfg.palette;
+        legendGradient.style.background = Utils.paletteToCSS(palette);
+        if (state.statMode === 'sd') {
+            legendMin.textContent = '0';
+            legendMax.textContent = 'High';
         } else {
-            let statLabel = '';
-            if (cfg.temporal && state.statMode !== 'mean') {
-                statLabel = ` — ${{ sd: 'Std. Dev', min: 'Minimum', max: 'Maximum' }[state.statMode]}`;
-            }
-            legendTitle.textContent = `${cfg.label}${statLabel} (${cfg.unit})`;
-            const palette = (state.statMode === 'sd') ? 'variance' : cfg.palette;
-            legendGradient.style.background = Utils.paletteToCSS(palette);
-            if (state.statMode === 'sd') {
-                legendMin.textContent = '0';
-                legendMax.textContent = 'High';
-            } else {
-                legendMin.textContent = cfg.domain[0];
-                legendMax.textContent = cfg.domain[1];
-            }
+            legendMin.textContent = cfg.domain[0];
+            legendMax.textContent = cfg.domain[1];
         }
     }
 
@@ -236,7 +197,7 @@ const Controls = (() => {
         document.getElementById('filter-total-count').textContent = totalCount.toLocaleString();
     }
 
-    function getState() { return { ...state, priceThreshold: { ...state.priceThreshold }, metricFilters: { ...state.metricFilters } }; }
+    function getState() { return { ...state, metricFilters: { ...state.metricFilters } }; }
     function fireChange() { if (onChangeCallback) onChangeCallback(getState()); }
 
     function updateConfigs(configs, temporal) {
