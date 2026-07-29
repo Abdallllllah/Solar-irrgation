@@ -47,11 +47,10 @@ const CountrySummary = (() => {
             const ci = row[Utils.COL.ci];
             const name = countryNames[ci] || 'Unknown';
             if (!map[name]) {
-                map[name] = { name, cells: 0, viable: 0, dySum: 0, dyCount: 0, prSum: 0, prCount: 0 };
+                map[name] = { name, cells: 0, dySum: 0, dyCount: 0, prSum: 0, prCount: 0 };
             }
             const c = map[name];
             c.cells++;
-            if (row[Utils.COL.viable]) c.viable++;
             const dy = row[Utils.COL.dy];
             if (dy != null) { c.dySum += dy; c.dyCount++; }
             const pr = row[Utils.COL.pr_min];
@@ -61,7 +60,6 @@ const CountrySummary = (() => {
         summaryData = Object.values(map).map(c => ({
             name: c.name,
             cells: c.cells,
-            viable: c.cells > 0 ? (c.viable / c.cells * 100) : 0,
             dy: c.dyCount > 0 ? c.dySum / c.dyCount : 0,
             pr: c.prCount > 0 ? c.prSum / c.prCount : null
         }));
@@ -83,11 +81,9 @@ const CountrySummary = (() => {
         const tbody = document.getElementById('country-table-body');
         let html = '';
         for (const c of sorted) {
-            const viableClass = c.viable >= 90 ? 'high' : c.viable >= 70 ? 'med' : 'low';
             html += `<tr class="country-row" data-country="${c.name}">
                 <td class="country-name-cell">${c.name}</td>
                 <td class="num">${c.cells.toLocaleString()}</td>
-                <td class="num viable-${viableClass}">${c.viable.toFixed(0)}%</td>
                 <td class="num">${c.dy.toFixed(1)}</td>
                 <td class="num">${c.pr != null ? '$' + Math.round(c.pr) : '—'}</td>
             </tr>`;
