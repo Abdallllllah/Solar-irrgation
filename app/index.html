@@ -83,6 +83,7 @@
                 </select>
                 <span class="badge-label">Crop</span>
             </div>
+            <button id="methodology-btn" class="methodology-btn" title="About this tool">ℹ️ About</button>
         </div>
     </header>
 
@@ -95,6 +96,7 @@
                 <div class="panel-header">
                     <span class="panel-icon">📊</span>
                     <span class="panel-title">Map Metric</span>
+                    <button class="info-btn" data-info="Choose which metric colors the map cells. Each metric shows a different dimension of solar irrigation potential.">ℹ️</button>
                 </div>
                 <div class="panel-body">
                     <div class="metric-grid" id="metric-selector">
@@ -157,6 +159,7 @@
                 <div class="panel-header">
                     <span class="panel-icon">🧪</span>
                     <span class="panel-title">Fertilizer Scenario</span>
+                    <button class="info-btn" data-info="Controls the assumed fertilizer application rate as a percentage of the agronomically optimal level. Lower rates simulate resource-constrained farmers.">ℹ️</button>
                 </div>
                 <div class="panel-body">
                     <div class="fert-toggle" id="fert-selector">
@@ -198,6 +201,7 @@
                 <div class="panel-header">
                     <span class="panel-icon">✅</span>
                     <span class="panel-title">Viability Filter</span>
+                    <button class="info-btn" data-info="Toggle visibility of economically viable vs non-viable cells. A cell is viable when the break-even crop price is below the current market price.">ℹ️</button>
                 </div>
                 <div class="panel-body">
                     <label class="toggle-row">
@@ -215,11 +219,56 @@
                 </div>
             </div>
 
+            <!-- Road Network (Rwanda & Kenya) -->
+            <div class="panel" id="panel-roads">
+                <div class="panel-header">
+                    <span class="panel-icon">🛣️</span>
+                    <span class="panel-title">Road Network</span>
+                    <button class="info-btn" data-info="Overlay ML-predicted road classifications from Sentinel-2 satellite imagery. Road distance measures the distance from each 10km cell center to the nearest paved road.">ℹ️</button>
+                    <span class="road-coverage-badge" id="road-badge">RW · KE</span>
+                </div>
+                <div class="panel-body">
+                    <label class="toggle-row">
+                        <input type="checkbox" id="road-toggle">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Show roads</span>
+                    </label>
+                    <div id="road-legend" class="road-legend" style="display:none;">
+                        <span class="road-legend-item"><span class="road-swatch road-paved"></span> Paved</span>
+                        <span class="road-legend-item"><span class="road-swatch road-unpaved"></span> Unpaved</span>
+                    </div>
+                    <div class="road-distance-note" id="road-distance-note" style="display:none;">
+                        📏 Distance to paved road shown in tooltip &amp; compare panel (Rwanda &amp; Kenya only)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Boundaries (All 40 SSA Countries) -->
+            <div class="panel" id="panel-admin">
+                <div class="panel-header">
+                    <span class="panel-icon">🗺️</span>
+                    <span class="panel-title">Admin Regions</span>
+                    <button class="info-btn" data-info="Toggle choropleth mode showing administrative boundaries (provinces/counties) colored by the average metric value. Data from geoBoundaries (CC-BY 4.0).">ℹ️</button>
+                    <span class="road-coverage-badge">40 SSA Countries</span>
+                </div>
+                <div class="panel-body">
+                    <label class="toggle-row">
+                        <input type="checkbox" id="admin-toggle">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Show boundaries</span>
+                    </label>
+                    <div id="region-summary-body" class="region-summary-body">
+                        <div class="region-empty">Select a country to see region summary</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Investment Analysis -->
             <div class="panel" id="panel-analysis">
                 <div class="panel-header">
                     <span class="panel-icon">🎯</span>
                     <span class="panel-title">Investment Analysis</span>
+                    <button class="info-btn" data-info="Set min/max ranges on any metric to filter the map. Only cells matching ALL active filters are shown.">ℹ️</button>
                 </div>
                 <div class="panel-body">
                     <!-- Metric Filters -->
@@ -273,6 +322,14 @@
                             <input type="number" class="filter-max" placeholder="max" step="5" min="0" max="100">
                         </div>
                     </div>
+                    <div class="filter-row" data-filter="road_dist">
+                        <span class="filter-label">🛣️ Road dist. (km)</span>
+                        <div class="filter-inputs">
+                            <input type="number" class="filter-min" placeholder="min" step="5" min="0">
+                            <span class="filter-dash">–</span>
+                            <input type="number" class="filter-max" placeholder="max" step="5" min="0">
+                        </div>
+                    </div>
 
                     <div class="filter-match" id="filter-match">
                         🔍 <span id="filter-match-count">—</span> of <span id="filter-total-count">—</span> cells match
@@ -280,25 +337,6 @@
                 </div>
             </div>
 
-            <!-- Legend -->
-            <div class="panel" id="panel-legend">
-                <div class="panel-header">
-                    <span class="panel-icon">🎨</span>
-                    <span class="panel-title">Legend</span>
-                </div>
-                <div class="panel-body">
-                    <div class="legend-metric-name" id="legend-title">Yield Gain (ton/ha)</div>
-                    <div class="legend-gradient" id="legend-gradient"></div>
-                    <div class="legend-labels">
-                        <span id="legend-min">0</span>
-                        <span id="legend-max">8</span>
-                    </div>
-                    <div class="legend-nonviable">
-                        <span class="legend-nonviable-swatch"></span>
-                        <span>Not Economically Viable</span>
-                    </div>
-                </div>
-            </div>
 
             <!-- Summary Stats -->
             <div class="panel" id="panel-stats">
@@ -357,11 +395,33 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Data Attribution -->
+            <div class="sidebar-attribution">
+                <div class="attribution-title">Data Sources</div>
+                <div class="attribution-item">Crop/irrigation data: <a href="https://zenodo.org/records/11080370" target="_blank" rel="noopener">Wamalwa et al. 2024</a></div>
+                <div class="attribution-item">Cropland: <a href="https://www.mapspam.info/" target="_blank" rel="noopener">IFPRI SPAM2017 v2.1</a></div>
+                <div class="attribution-item">Admin boundaries: <a href="https://www.geoboundaries.org" target="_blank" rel="noopener">geoBoundaries</a> (CC-BY 4.0)</div>
+                <div class="attribution-item">Road predictions: Sentinel-2 ML (RW &amp; KE)</div>
+            </div>
         </aside>
 
         <!-- Map Container -->
         <main id="map-container">
             <div id="map"></div>
+            <!-- Floating Legend -->
+            <div class="floating-legend" id="panel-legend">
+                <div class="legend-metric-name" id="legend-title">Yield Gain (ton/ha)</div>
+                <div class="legend-gradient" id="legend-gradient"></div>
+                <div class="legend-labels">
+                    <span id="legend-min">0</span>
+                    <span id="legend-max">8</span>
+                </div>
+                <div class="legend-nonviable">
+                    <span class="legend-nonviable-swatch"></span>
+                    <span>Not Economically Viable</span>
+                </div>
+            </div>
             <!-- Tooltip -->
             <div id="tooltip" class="map-tooltip" style="display:none;"></div>
         </main>
@@ -395,12 +455,141 @@
         <div class="compare-hint">Click any cell on the map to compare crops</div>
     </div>
 
+    <!-- Methodology Modal -->
+    <div id="methodology-modal" class="method-modal">
+        <div class="method-modal-content">
+            <div class="method-header">
+                <h2>ℹ️ About This Tool</h2>
+                <button id="method-close" class="method-close">✕</button>
+            </div>
+            <div class="method-body">
+
+                <section class="method-section">
+                    <h3>Overview</h3>
+                    <p>This platform is an interactive decision-support tool for exploring the techno-economic potential of <strong>solar-powered irrigation</strong> across <strong>40 Sub-Saharan African countries</strong>. It visualizes over <strong>132,000 rainfed cropland grid cells</strong> (10 km × 10 km resolution) with crop-specific metrics spanning irrigation demand, energy requirements, economic viability, and environmental parameters.</p>
+                    <p>The tool is designed for <strong>policymakers, development practitioners, and researchers</strong> to identify high-potential regions for solar irrigation investment at both national and sub-national levels.</p>
+                </section>
+
+                <section class="method-section">
+                    <h3>Data Sources</h3>
+                    <table class="method-table">
+                        <thead><tr><th>Dataset</th><th>Source</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>Crop & Irrigation Simulations</td><td><a href="https://zenodo.org/records/11080370" target="_blank">Wamalwa et al. 2024</a></td><td>10 km gridded simulations of irrigation water requirements, yield gains, energy demand, and break-even crop prices for 7 crops across SSA (2001–2019).</td></tr>
+                            <tr><td>Admin Boundaries (ADM1)</td><td><a href="https://www.geoboundaries.org" target="_blank">geoBoundaries</a></td><td>Simplified administrative boundary polygons (provinces, counties) for all 40 SSA countries. CC-BY 4.0 license.</td></tr>
+                            <tr><td>Road Network</td><td>Sentinel-2 ML Predictions</td><td>Machine learning-predicted paved and unpaved road segments for Rwanda and Kenya, derived from Sentinel-2 satellite imagery.</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="method-section">
+                    <h3>Map Metrics Explained</h3>
+                    <table class="method-table">
+                        <thead><tr><th>Metric</th><th>Unit</th><th>What It Measures</th></tr></thead>
+                        <tbody>
+                            <tr><td>🌾 Yield Gain</td><td>ton/ha</td><td>The additional crop yield obtained from irrigation compared to rainfed-only production. Higher values indicate locations where irrigation has the greatest agronomic impact.</td></tr>
+                            <tr><td>💧 Water Requirement</td><td>m³/ha/yr</td><td>The volume of irrigation water needed per hectare per year to supplement rainfall. Calculated as the gap between crop water demand and effective rainfall.</td></tr>
+                            <tr><td>⚡ Energy Requirement</td><td>kWh/ha/yr</td><td>The electrical energy needed to pump groundwater for irrigation, accounting for depth-to-water, pump efficiency, and water volume requirements.</td></tr>
+                            <tr><td>💰 Break-even Price</td><td>USD/ton</td><td>The minimum crop selling price at which solar irrigation investment becomes financially viable. Accounts for PV system cost, borehole drilling, pump, and installation. <strong>Lower is better.</strong></td></tr>
+                            <tr><td>☀ Solar Radiation</td><td>kWh/m²/day</td><td>Average daily solar irradiance at the surface. Determines how much energy a photovoltaic panel can generate at each location.</td></tr>
+                            <tr><td>🕳 Groundwater Depth</td><td>meters</td><td>Estimated depth to the water table. Deeper water tables require more energy to pump and increase borehole drilling costs.</td></tr>
+                            <tr><td>🔋 PV System Size</td><td>kWp/ha</td><td>The peak capacity of the solar photovoltaic system required to power irrigation for one hectare of cropland.</td></tr>
+                            <tr><td>💦 Groundwater Yield</td><td>L/s</td><td>Estimated sustainable borehole abstraction rate. Low yields may limit the feasibility of groundwater-based irrigation.</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="method-section">
+                    <h3>Fertilizer Scenarios</h3>
+                    <p>The platform models four fertilizer application scenarios to reflect the range of farming practices across SSA:</p>
+                    <table class="method-table">
+                        <thead><tr><th>Scenario</th><th>Meaning</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>FERT100</strong></td><td>100% of the agronomically optimal fertilizer rate. Represents the theoretical maximum yield with full nutrient supply.</td></tr>
+                            <tr><td><strong>FERT85</strong></td><td>85% of optimal. A minor reduction simulating slight resource constraints or sub-optimal timing.</td></tr>
+                            <tr><td><strong>FERT50</strong></td><td>50% of optimal. Represents moderately resource-constrained smallholder farmers.</td></tr>
+                            <tr><td><strong>FERT25</strong></td><td>25% of optimal. Represents severely constrained conditions with minimal fertilizer access.</td></tr>
+                        </tbody>
+                    </table>
+                    <p>Lower fertilizer rates generally result in lower yield gains from irrigation and higher break-even prices, reflecting the interaction between water and nutrient availability.</p>
+                </section>
+
+                <section class="method-section">
+                    <h3>Methodology</h3>
+                    <div class="method-subsection">
+                        <h4>Grid Resolution</h4>
+                        <p>All simulations are performed on a <strong>10 km × 10 km grid</strong> (approximately 0.0833° at the equator). Each cell represents a spatial unit for which crop growth, water balance, and economic calculations are performed.</p>
+                    </div>
+                    <div class="method-subsection">
+                        <h4>Temporal Coverage</h4>
+                        <p>Simulations span <strong>19 years (2001–2019)</strong>. For each cell, the platform reports the temporal <strong>mean</strong> alongside <strong>standard deviation, minimum, and maximum</strong> values to capture inter-annual climate variability.</p>
+                    </div>
+                    <div class="method-subsection">
+                        <h4>Economic Viability</h4>
+                        <p>A cell is classified as <strong>economically viable</strong> when its break-even crop price falls below the current market price. The break-even calculation considers:</p>
+                        <ul>
+                            <li>Capital cost of the PV system (panels, inverter, mounting)</li>
+                            <li>Borehole drilling cost (proportional to depth-to-water)</li>
+                            <li>Pump and irrigation equipment costs</li>
+                            <li>System lifetime and discount rate</li>
+                            <li>Annual yield gain from irrigation (the revenue side)</li>
+                        </ul>
+                    </div>
+                    <div class="method-subsection">
+                        <h4>Cropland Filtering</h4>
+                        <p>Only grid cells with existing <strong>rainfed cropland</strong> (as identified by SPAM2017) are included. This restricts the analysis to areas where farming already takes place, rather than proposing irrigation on uncultivated land.</p>
+                    </div>
+                </section>
+
+                <section class="method-section">
+                    <h3>Road Distance</h3>
+                    <p>For Rwanda and Kenya, the platform calculates the <strong>distance from each cell's centroid</strong> (center point) <strong>to the nearest paved road segment</strong>. Road classifications (paved vs. unpaved) are derived from machine learning models applied to Sentinel-2 satellite imagery.</p>
+                    <p>This metric serves as a proxy for <strong>market access and logistics feasibility</strong> — cells closer to paved roads face lower transport costs for both agricultural inputs and harvested produce.</p>
+                    <p><em>Note: Road data is currently available for Rwanda and Kenya only. Continental coverage is planned pending additional ML-predicted road datasets.</em></p>
+                </section>
+
+                <section class="method-section">
+                    <h3>Administrative Boundaries & Choropleth Mode</h3>
+                    <p>Toggling <strong>"Show boundaries"</strong> activates choropleth mode, which:</p>
+                    <ol>
+                        <li>Loads the ADM1 (first-level administrative) boundary polygons for the selected country from geoBoundaries.</li>
+                        <li>Groups all grid cells within each administrative region using a pre-computed <strong>point-in-polygon spatial lookup</strong> (132,083 cells mapped across 486 regions).</li>
+                        <li>Calculates the <strong>average metric value</strong> across all cells in each region.</li>
+                        <li>Colors each region on a <strong>green-to-red gradient</strong> (7-stop color ramp), with metric-appropriate inversion (e.g., green = high yield gain, but green = low break-even price).</li>
+                    </ol>
+                    <p>This enables <strong>policy-level analysis</strong> at the provincial/county scale, as requested by decision-makers who operate at the sub-national administrative level.</p>
+                </section>
+
+                <section class="method-section">
+                    <h3>Investment Analysis Filters</h3>
+                    <p>The filter panel allows setting <strong>minimum and/or maximum thresholds</strong> on any combination of metrics simultaneously. Only cells matching <strong>ALL active filters</strong> are displayed on the map. This enables targeted site identification, for example:</p>
+                    <ul>
+                        <li><strong>High-potential sites:</strong> Yield Gain &gt; 3 t/ha AND Break-even &lt; $200/ton</li>
+                        <li><strong>Accessible sites:</strong> Road Distance &lt; 10 km AND GW Depth &lt; 30 m</li>
+                        <li><strong>Water-efficient sites:</strong> Water Req. &lt; 2000 m³/ha AND Cropland &gt; 30%</li>
+                    </ul>
+                    <p>The filter match counter at the bottom shows how many cells satisfy the active criteria out of the total dataset.</p>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/utils.js"></script>
     <script src="js/map.js"></script>
     <script src="js/controls.js"></script>
+    <script src="js/roads.js"></script>
+    <script src="js/admin.js"></script>
     <script src="js/country-summary.js"></script>
     <script src="js/compare.js"></script>
     <script src="js/app.js"></script>
+    <script>
+        // Methodology modal open/close
+        const _mModal = document.getElementById('methodology-modal');
+        document.getElementById('methodology-btn').addEventListener('click', () => _mModal.classList.add('open'));
+        document.getElementById('method-close').addEventListener('click', () => _mModal.classList.remove('open'));
+        _mModal.addEventListener('click', (e) => { if (e.target === _mModal) _mModal.classList.remove('open'); });
+    </script>
 </body>
 </html>

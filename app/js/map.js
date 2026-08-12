@@ -111,8 +111,15 @@ const MapView = (() => {
         const metricVal = d[Utils.COL[resolvedCol]];
         const statSuffix = currentStatMode !== 'mean' ? ` (${currentStatMode.toUpperCase()})` : '';
 
+        // Admin region (Rwanda/Kenya)
+        let regionTag = '';
+        if (typeof Admin !== 'undefined' && Admin.hasData()) {
+            const region = Admin.getRegionByCoords(d[Utils.COL.lat], d[Utils.COL.lon]);
+            if (region) regionTag = `<span style="color:#93c5fd;font-size:10px;"> · ${region}</span>`;
+        }
+
         let html = `<div class="tooltip-header">
-            <span class="tooltip-country">${countryName}</span>
+            <span class="tooltip-country">${countryName}</span>${regionTag}
             &nbsp;·&nbsp;${d[Utils.COL.lon].toFixed(2)}°, ${d[Utils.COL.lat].toFixed(2)}°
         </div>`;
 
@@ -149,6 +156,13 @@ const MapView = (() => {
             others.push(['Price (min)', Utils.formatMetric(d[Utils.COL.pr_min], 'pr_min')]);
             others.push(['Price (max)', Utils.formatMetric(d[Utils.COL.pr_max], 'pr_max')]);
         }
+        // Road distance (Rwanda & Kenya only)
+        if (typeof Roads !== 'undefined' && Roads.hasData()) {
+            const roadDist = Roads.getDistanceByCoords(d[Utils.COL.lat], d[Utils.COL.lon]);
+            if (roadDist != null) {
+                others.push(['🛣️ Road', roadDist.toFixed(1) + ' km']);
+            }
+        }
         if (others.length) {
             html += `<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.06);padding-top:4px;">`;
             for (const [l, v] of others) html += `<div class="tooltip-row"><span class="tooltip-label">${l}</span><span class="tooltip-val">${v}</span></div>`;
@@ -179,5 +193,7 @@ const MapView = (() => {
         map.flyTo({ center: SSA_CENTER, zoom: SSA_ZOOM, duration: 1500 });
     }
 
-    return { init, setData, setFilteredData, setMetric, setOnCellClick, flyToCountry, flyToAll, updateLayer };
+    function getMap() { return map; }
+
+    return { init, setData, setFilteredData, setMetric, setOnCellClick, flyToCountry, flyToAll, updateLayer, getMap };
 })();

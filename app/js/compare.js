@@ -1,11 +1,8 @@
-/**
- * compare.js — Cross-Crop Comparison Panel
- * Click a cell on the map → shows all 7 crops compared with bar charts.
- */
 const Compare = (() => {
     'use strict';
 
     let compareData = null;
+    let loadedFert = null;    // track which fert scenario is loaded
     let isOpen = false;
     const CROPS = ['maize', 'cassava', 'onion', 'potato', 'sorghum', 'tomato', 'wheat'];
     const LABELS = {
@@ -19,19 +16,26 @@ const Compare = (() => {
 
     async function init() {
         document.getElementById('compare-close').addEventListener('click', close);
-        // Load compare data lazily on first click
     }
 
-    async function ensureData() {
-        if (compareData) return;
-        const res = await fetch('data/compare.json');
-        if (!res.ok) throw new Error('Failed to load compare.json');
+    async function ensureData(fert) {
+        const fertKey = (fert || 'FERT100').toLowerCase();  // e.g. 'fert85'
+        if (compareData && loadedFert === fertKey) return;
+        // Try fert-specific file first, fall back to generic compare.json
+        let url = `data/compare_${fertKey}.json`;
+        let res = await fetch(url);
+        if (!res.ok) {
+            url = 'data/compare.json';
+            res = await fetch(url);
+        }
+        if (!res.ok) throw new Error('Failed to load compare data');
         compareData = await res.json();
-        console.log(`[Compare] Loaded ${compareData.data.length.toLocaleString()} cells × ${CROPS.length} crops`);
+        loadedFert = fertKey;
+        console.log(`[Compare] Loaded ${fertKey}: ${compareData.data.length.toLocaleString()} cells × ${CROPS.length} crops`);
     }
 
-    async function showCell(cellIndex, cellData, countryName) {
-        await ensureData();
+    async function showCell(cellIndex, cellData, countryName, fert) {
+        await ensureData(fert);
         if (cellIndex < 0 || cellIndex >= compareData.data.length) return;
 
         const row = compareData.data[cellIndex];
@@ -50,8 +54,15 @@ const Compare = (() => {
         const srad = cellData[Utils.COL.srad];
         const dtw = cellData[Utils.COL.dtw_min];
 
+        // Admin region
+        let regionLabel = '';
+        if (typeof Admin !== 'undefined' && Admin.hasData()) {
+            const region = Admin.getRegionByCoords(lat, lon);
+            if (region) regionLabel = ` · ${region}`;
+        }
+
         document.getElementById('compare-location').innerHTML = `
-            <div class="loc-country">${countryName}</div>
+            <div class="loc-country">${countryName}${regionLabel}</div>
             <div class="loc-coords">${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}, ${Math.abs(lon).toFixed(2)}°${lon >= 0 ? 'E' : 'W'}</div>
         `;
 
@@ -59,6 +70,15 @@ const Compare = (() => {
         renderChart('chart-dy', dy, 't/ha', false);
         renderChart('chart-pr', pr, '$/ton', true);
         renderChart('chart-irr', irr, 'm³/ha', true);
+
+        // Road distance
+        let roadHtml = '';
+        if (typeof Roads !== 'undefined' && Roads.hasData()) {
+            const roadDist = Roads.getDistanceByCoords(lat, lon);
+            if (roadDist != null) {
+                roadHtml = `<div class="shared-item"><span class="shared-label">🛣️ Paved Road</span><span class="shared-val">${roadDist.toFixed(1)} km</span></div>`;
+            }
+        }
 
         // Shared info
         document.getElementById('compare-shared').innerHTML = `
@@ -68,6 +88,7 @@ const Compare = (() => {
                 <div class="shared-item"><span class="shared-label">GW Yield</span><span class="shared-val">${gwp != null ? gwp.toFixed(1) + ' L/s' : 'N/A'}</span></div>
                 <div class="shared-item"><span class="shared-label">Solar</span><span class="shared-val">${srad != null ? srad.toFixed(1) + ' kWh/m²/d' : 'N/A'}</span></div>
                 <div class="shared-item"><span class="shared-label">Depth to Water</span><span class="shared-val">${dtw != null ? Math.round(dtw) + ' m' : 'N/A'}</span></div>
+                ${roadHtml}
             </div>
         `;
 

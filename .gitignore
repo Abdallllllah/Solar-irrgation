@@ -15,6 +15,12 @@ Thumbs.db
 
 # Large data / Shapefiles
 Road predictions/
+geoBoundaries*
+*.lock
+
+# Legacy boundary files (replaced by app/data/admin/<ISO3>.geojson)
+app/data/admin_ke.geojson
+app/data/admin_rw.geojson
 
 # Python
 __pycache__/

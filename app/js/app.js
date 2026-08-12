@@ -51,11 +51,26 @@
         // Wire up click-to-compare
         Compare.init();
         CountrySummary.init(indexData.countries);
+
+        // Wire up road network + admin boundary overlays (wait for map to be ready)
+        const mapGL = MapView.getMap();
+        if (mapGL) {
+            mapGL.on('load', async () => {
+                await Roads.init(mapGL, allData);
+                await Admin.init(mapGL, allData);
+            });
+            if (mapGL.loaded()) {
+                await Roads.init(mapGL, allData);
+                await Admin.init(mapGL, allData);
+            }
+        }
+
         MapView.setOnCellClick((cellData, cellIndex, info) => {
             // Find the cell index in the FULL dataset (allData), not filtered
             const fullIndex = allData.indexOf(cellData);
             const countryName = fertData.countries[cellData[Utils.COL.ci]] || 'Unknown';
-            Compare.showCell(fullIndex >= 0 ? fullIndex : cellIndex, cellData, countryName);
+            const activeFert = Controls.getState().fert;
+            Compare.showCell(fullIndex >= 0 ? fullIndex : cellIndex, cellData, countryName, activeFert);
         });
 
         updateLoading('Rendering...', 90);
@@ -163,13 +178,21 @@
 
         // Build metric filter checks
         const filterChecks = [];
+        let roadDistFilter = null;  // Special: not in cell array
         for (const [metric, range] of Object.entries(state.metricFilters)) {
+            // Handle road_dist: uses Roads module lookup
+            if (metric === 'road_dist') {
+                if (typeof Roads !== 'undefined' && Roads.hasData()) {
+                    roadDistFilter = { min: range.min, max: range.max };
+                }
+                continue;
+            }
             // Handle cropland_pct: convert percentage to hectares (10km cell = 10,000 ha)
             if (metric === 'cropland_pct') {
                 const colIdx = Utils.COL.cropland;
                 if (colIdx == null) continue;
                 if (range.min != null) {
-                    const minHa = range.min * 100;  // e.g., 50% = 5000 ha
+                    const minHa = range.min * 100;
                     filterChecks.push(row => {
                         const v = row[colIdx];
                         return v != null && v >= minHa;
@@ -211,6 +234,15 @@
             for (const check of filterChecks) {
                 if (!check(row)) return false;
             }
+            // Road distance filter (only applies to cells with road data)
+            if (roadDistFilter) {
+                const dist = Roads.getDistanceByCoords(row[Utils.COL.lat], row[Utils.COL.lon]);
+                if (dist != null) {
+                    if (roadDistFilter.min != null && dist < roadDistFilter.min) return false;
+                    if (roadDistFilter.max != null && dist > roadDistFilter.max) return false;
+                }
+                // Cells without road data (non-RW/KE) pass through
+            }
             return true;
         });
 
@@ -234,6 +266,10 @@
         // Update country summary table
         const countryNames = dataCache[`${currentCrop}_${currentFert}`]?.countries || [];
         CountrySummary.update(filteredData, countryNames);
+
+        // Update admin region summary + choropleth (Rwanda/Kenya)
+        const currentState = Controls.getState();
+        Admin.updateRegionSummary(filteredData, currentState.country, countryNames, currentState.metric);
     }
 
     function findCountryIndex(name) {
@@ -247,6 +283,9 @@
         if (state.country !== 'all') {
             const ci = indexData.countries.find(c => c.name === state.country);
             if (ci) MapView.flyToCountry(ci.bounds);
+            // Load road overlay (Rwanda/Kenya only) + admin boundaries (all 40 countries)
+            Roads.loadCountry(state.country);
+            Admin.loadCountry(state.country);
         } else if (state.region !== 'all') {
             const rc = indexData.countries.filter(c => c.region === state.region);
             if (rc.length) {
@@ -255,8 +294,14 @@
                     [Math.max(...rc.map(c => c.bounds[1][0])), Math.max(...rc.map(c => c.bounds[1][1]))]
                 ]);
             }
+            // Clear single-country overlays when viewing a region
+            Roads.loadCountry('');
+            Admin.loadCountry('');
         } else {
             MapView.flyToAll();
+            // Clear single-country overlays when viewing all
+            Roads.loadCountry('');
+            Admin.loadCountry('');
         }
     }
 
