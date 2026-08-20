@@ -50,6 +50,7 @@
 
         // Wire up click-to-compare
         Compare.init();
+        ExportPDF.init();
         CountrySummary.init(indexData.countries);
 
         // Wire up road network + admin boundary overlays (wait for map to be ready)
@@ -315,4 +316,12 @@
         if (!res.ok) throw new Error(`Failed: ${url} (${res.status})`);
         return res.json();
     }
+
+    // Expose for CSV export
+    window.AppData = {
+        getFilteredData: () => filteredData,
+        getCountryNames: () => dataCache[`${currentCrop}_${currentFert}`]?.countries || [],
+        getCrop: () => currentCrop,
+        getFert: () => currentFert
+    };
 })();

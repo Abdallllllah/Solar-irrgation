@@ -24,10 +24,11 @@ const MapView = (() => {
             container: 'map',
             style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
             center: SSA_CENTER, zoom: SSA_ZOOM,
-            minZoom: 2, maxZoom: 14, antialias: true, attributionControl: true
+            minZoom: 2, maxZoom: 14, antialias: true, attributionControl: true,
+            preserveDrawingBuffer: true
         });
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
-        deckOverlay = new deck.MapboxOverlay({ interleaved: false, layers: [] });
+        deckOverlay = new deck.MapboxOverlay({ interleaved: false, layers: [], _gl: { preserveDrawingBuffer: true } });
         map.addControl(deckOverlay);
     }
 
