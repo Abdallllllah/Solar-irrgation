@@ -135,7 +135,7 @@ html, body {
     border-bottom: 1px solid var(--glass-border);
     display: flex; align-items: center; justify-content: space-between;
     padding: 0 var(--sp-lg);
-    z-index: 100;
+    z-index: 1050;
     position: relative;
 }
 .header-left { display: flex; align-items: center; gap: var(--sp-md); }
@@ -898,14 +898,12 @@ html, body {
 }
 .export-menu {
     display: none;
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
+    position: fixed;
     background: var(--bg-primary);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    z-index: 200;
+    z-index: 9000;
     min-width: 160px;
     overflow: hidden;
 }

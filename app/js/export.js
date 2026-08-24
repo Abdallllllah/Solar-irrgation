@@ -219,7 +219,7 @@ const ExportPDF = (() => {
                 });
             }
 
-            // Footer
+            // Footer (page 1)
             doc.setFillColor(30, 30, 34);
             doc.rect(0, pageH - 10, pageW, 10, 'F');
             doc.setFont('helvetica', 'normal');
@@ -227,6 +227,170 @@ const ExportPDF = (() => {
             doc.setTextColor(...TEXT_SECONDARY);
             doc.text('Data: Wamalwa et al. 2024  |  Admin Boundaries: geoBoundaries (CC-BY 4.0)  |  Roads: Sentinel-2 ML (RW & KE)', 10, pageH - 4);
             doc.text('Solar Irrigation Potential in Sub-Saharan Africa', pageW - 10, pageH - 4, { align: 'right' });
+
+            // ---- Page 2: Cross-Crop Comparison (only if panel is open) ----
+            const comparePanel = document.getElementById('compare-panel');
+            if (comparePanel && comparePanel.classList.contains('open')) {
+                doc.addPage();
+
+                // Dark background
+                doc.setFillColor(...DARK_BG);
+                doc.rect(0, 0, pageW, pageH, 'F');
+
+                // Header bar
+                doc.setFillColor(30, 30, 34);
+                doc.rect(0, 0, pageW, 18, 'F');
+                doc.setFillColor(...AMBER);
+                doc.rect(0, 17.5, pageW, 0.5, 'F');
+
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.setTextColor(...TEXT_PRIMARY);
+                doc.text('Cross-Crop Comparison', 10, 12);
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(...TEXT_SECONDARY);
+                doc.text('Page 2 of 2', pageW - 10, 12, { align: 'right' });
+
+                // Location info
+                const locEl = document.getElementById('compare-location');
+                const locCountry = locEl ? locEl.querySelector('.loc-country') : null;
+                const locCoords = locEl ? locEl.querySelector('.loc-coords') : null;
+
+                let cy = 26;
+                if (locCountry) {
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(12);
+                    doc.setTextColor(...AMBER);
+                    doc.text(stripEmoji(locCountry.textContent), 10, cy);
+                    cy += 5;
+                }
+                if (locCoords) {
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.setTextColor(...TEXT_SECONDARY);
+                    doc.text(locCoords.textContent.trim(), 10, cy);
+                    cy += 8;
+                }
+
+                // Helper: scrape chart data from a compare-chart container
+                function scrapeChart(chartId) {
+                    const container = document.getElementById(chartId);
+                    if (!container) return [];
+                    const rows = container.querySelectorAll('.bar-row');
+                    const items = [];
+                    rows.forEach(row => {
+                        const label = row.querySelector('.bar-label');
+                        const value = row.querySelector('.bar-value');
+                        const fill = row.querySelector('.bar-fill');
+                        if (label && value) {
+                            const pct = fill ? parseFloat(fill.style.width) || 0 : 0;
+                            // Extract RGB from fill background
+                            let color = [150, 150, 150];
+                            if (fill && fill.style.background) {
+                                const m = fill.style.background.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+                                if (m) color = [parseInt(m[1]), parseInt(m[2]), parseInt(m[3])];
+                                // Try hex
+                                const hm = fill.style.background.match(/#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i);
+                                if (hm) color = [parseInt(hm[1], 16), parseInt(hm[2], 16), parseInt(hm[3], 16)];
+                            }
+                            items.push({
+                                label: stripEmoji(label.textContent.trim()),
+                                value: stripEmoji(value.textContent.trim()),
+                                pct: pct,
+                                color: color
+                            });
+                        }
+                    });
+                    return items;
+                }
+
+                // Render a chart section in the PDF
+                function renderPdfChart(title, chartId, startY, colX) {
+                    const items = scrapeChart(chartId);
+                    const chartW = 120;
+
+                    doc.setFillColor(35, 35, 40);
+                    const chartH = 12 + items.length * 9;
+                    doc.roundedRect(colX, startY, chartW, chartH, 2, 2, 'F');
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(9);
+                    doc.setTextColor(...AMBER);
+                    doc.text(title.toUpperCase(), colX + 5, startY + 7);
+
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(7);
+
+                    items.forEach((item, i) => {
+                        const rowY = startY + 14 + i * 9;
+
+                        // Label
+                        doc.setTextColor(...TEXT_PRIMARY);
+                        doc.text(item.label, colX + 5, rowY);
+
+                        // Bar background
+                        doc.setFillColor(45, 45, 50);
+                        doc.roundedRect(colX + 35, rowY - 3.5, 50, 5, 1, 1, 'F');
+
+                        // Bar fill
+                        const barW = Math.max(1, (item.pct / 100) * 50);
+                        doc.setFillColor(...item.color);
+                        doc.roundedRect(colX + 35, rowY - 3.5, barW, 5, 1, 1, 'F');
+
+                        // Value
+                        doc.setTextColor(...TEXT_SECONDARY);
+                        doc.text(item.value, colX + chartW - 5, rowY, { align: 'right' });
+                    });
+
+                    return startY + chartH + 6;
+                }
+
+                // Render 3 charts
+                let leftY = cy;
+                leftY = renderPdfChart('Yield Gain (t/ha)', 'chart-dy', leftY, 10);
+                leftY = renderPdfChart('Break-even Price ($/ton)', 'chart-pr', leftY, 10);
+                leftY = renderPdfChart('Water Requirement (m3/ha)', 'chart-irr', leftY, 10);
+
+                // Shared cell properties (right side)
+                const sharedEl = document.getElementById('compare-shared');
+                if (sharedEl) {
+                    const sharedItems = sharedEl.querySelectorAll('.shared-item');
+                    if (sharedItems.length) {
+                        const spX = 145;
+                        const spW = 90;
+                        doc.setFillColor(35, 35, 40);
+                        doc.roundedRect(spX, cy, spW, 10 + sharedItems.length * 6, 2, 2, 'F');
+
+                        doc.setFont('helvetica', 'bold');
+                        doc.setFontSize(9);
+                        doc.setTextColor(...AMBER);
+                        doc.text('CELL PROPERTIES', spX + 5, cy + 7);
+
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(7);
+                        sharedItems.forEach((item, i) => {
+                            const rowY = cy + 14 + i * 6;
+                            const lbl = item.querySelector('.shared-label');
+                            const val = item.querySelector('.shared-val');
+                            doc.setTextColor(...TEXT_SECONDARY);
+                            doc.text(stripEmoji(lbl ? lbl.textContent : ''), spX + 5, rowY);
+                            doc.setTextColor(...TEXT_PRIMARY);
+                            doc.text(stripEmoji(val ? val.textContent : ''), spX + spW - 5, rowY, { align: 'right' });
+                        });
+                    }
+                }
+
+                // Footer (page 2)
+                doc.setFillColor(30, 30, 34);
+                doc.rect(0, pageH - 10, pageW, 10, 'F');
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6);
+                doc.setTextColor(...TEXT_SECONDARY);
+                doc.text('Data: Wamalwa et al. 2024  |  Admin Boundaries: geoBoundaries (CC-BY 4.0)  |  Roads: Sentinel-2 ML (RW & KE)', 10, pageH - 4);
+                doc.text('Solar Irrigation Potential in Sub-Saharan Africa', pageW - 10, pageH - 4, { align: 'right' });
+            }
 
             // Save
             const filename = 'solar_irrigation_' + cropName + '_' + fertLevel + '_' + now.toISOString().slice(0, 10) + '.pdf';

@@ -602,10 +602,14 @@
         document.getElementById('method-close').addEventListener('click', () => _mModal.classList.remove('open'));
         _mModal.addEventListener('click', (e) => { if (e.target === _mModal) _mModal.classList.remove('open'); });
 
-        // Export dropdown toggle
+        // Export dropdown toggle (fixed positioning to escape stacking contexts)
         const _eMenu = document.getElementById('export-menu');
-        document.getElementById('export-btn').addEventListener('click', (e) => {
+        const _eBtn = document.getElementById('export-btn');
+        _eBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            const rect = _eBtn.getBoundingClientRect();
+            _eMenu.style.top = (rect.bottom + 6) + 'px';
+            _eMenu.style.right = (window.innerWidth - rect.right) + 'px';
             _eMenu.classList.toggle('open');
         });
         document.addEventListener('click', () => _eMenu.classList.remove('open'));
