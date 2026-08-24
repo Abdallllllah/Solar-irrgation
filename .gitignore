@@ -1,4 +1,4 @@
-# Raw data (too large for GitHub)
+# Raw data (too large for normal tracking)
 *_crop_data.csv
 
 # Scratch/temp scripts
@@ -25,3 +25,6 @@ app/data/admin_rw.geojson
 # Python
 __pycache__/
 *.pyc
+
+# Upload folder — NOT ignored (Nathan drops files here via GitHub web UI)
+!uploads/

@@ -1,0 +1,84 @@
+name: Process Data & Deploy
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'uploads/**'
+
+jobs:
+  process-uploads:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pyshp
+
+      - name: Detect uploaded crop CSVs
+        id: crops
+        run: |
+          CROPS=""
+          for f in uploads/*_crop_data.csv; do
+            if [ -f "$f" ]; then
+              CROP=$(basename "$f" | sed 's/_crop_data\.csv//')
+              CROPS="$CROPS $CROP"
+              echo "Found crop CSV: $CROP"
+              # Move to root for preprocess.py
+              cp "$f" "./${CROP}_crop_data.csv"
+            fi
+          done
+          echo "crops=$CROPS" >> $GITHUB_OUTPUT
+
+      - name: Preprocess crop data
+        if: steps.crops.outputs.crops != ''
+        run: |
+          for CROP in ${{ steps.crops.outputs.crops }}; do
+            echo "===== Processing $CROP ====="
+            python preprocess.py "$CROP"
+          done
+
+      - name: Rebuild cross-crop comparison files
+        if: steps.crops.outputs.crops != ''
+        run: python build_compare.py
+
+      - name: Detect uploaded road shapefiles
+        id: roads
+        run: |
+          FOUND="false"
+          for f in uploads/*.shp; do
+            if [ -f "$f" ]; then
+              FOUND="true"
+              echo "Found shapefile: $f"
+            fi
+          done
+          echo "found=$FOUND" >> $GITHUB_OUTPUT
+
+      - name: Process road shapefiles
+        if: steps.roads.outputs.found == 'true'
+        run: |
+          # Copy shapefiles to Road predictions/ for the script
+          mkdir -p "Road predictions"
+          cp uploads/*.shp uploads/*.dbf uploads/*.shx uploads/*.prj "Road predictions/" 2>/dev/null || true
+          python preprocess_roads.py
+
+      - name: Clean up uploads folder
+        run: |
+          # Remove processed files from uploads/ (keep README)
+          find uploads/ -type f ! -name 'README.md' -delete
+
+      - name: Commit processed data
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add app/data/ uploads/
+          git diff --staged --quiet || git commit -m "Auto-processed uploaded data"
+          git push
