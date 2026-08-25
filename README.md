@@ -2,7 +2,7 @@
 
 An interactive decision-support tool for exploring the techno-economic potential of solar-powered irrigation across **40 Sub-Saharan African countries**, covering **7 crops** and **132,000+ grid cells**.
 
-🔗 **Live Demo**: [Netlify deployment](https://solar-irrigation.netlify.app)
+🔗 **Live Demo**: [Netlify deployment](https://solar-irrigation-ssa.netlify.app/)
 
 ---
 
