@@ -24,6 +24,73 @@ const ExportPDF = (() => {
         if (pdfBtn) pdfBtn.addEventListener('click', generatePDF);
         const csvBtn = document.getElementById('export-csv-btn');
         if (csvBtn) csvBtn.addEventListener('click', generateCSV);
+        const pngBtn = document.getElementById('export-png-btn');
+        if (pngBtn) pngBtn.addEventListener('click', generatePNG);
+    }
+
+    // ===================== PNG =====================
+
+    async function generatePNG() {
+        const btn = document.getElementById('export-png-btn');
+        const originalText = btn.textContent;
+        btn.textContent = '  Capturing...';
+        btn.disabled = true;
+
+        try {
+            // Small delay to let the dropdown close and UI settle
+            await new Promise(r => setTimeout(r, 300));
+
+            // Hide the export dropdown and header buttons during capture
+            const exportDropdown = document.querySelector('.export-dropdown');
+            if (exportDropdown) exportDropdown.style.visibility = 'hidden';
+
+            const canvas = await html2canvas(document.body, {
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#18181b',
+                scale: window.devicePixelRatio || 2,
+                logging: false,
+                // Capture existing canvases (MapLibre + Deck.gl)
+                onclone: function(clonedDoc) {
+                    // Copy map canvas content into the cloned document
+                    const origCanvases = document.querySelectorAll('#map canvas');
+                    const clonedCanvases = clonedDoc.querySelectorAll('#map canvas');
+                    origCanvases.forEach((orig, i) => {
+                        if (clonedCanvases[i]) {
+                            const ctx = clonedCanvases[i].getContext('2d');
+                            try { ctx.drawImage(orig, 0, 0); } catch (e) { /* cross-origin */ }
+                        }
+                    });
+                }
+            });
+
+            // Restore visibility
+            if (exportDropdown) exportDropdown.style.visibility = '';
+
+            // Download
+            canvas.toBlob(function(blob) {
+                if (!blob) {
+                    alert('PNG export failed. Please try again.');
+                    return;
+                }
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const now = new Date();
+                a.href = url;
+                a.download = 'solar_irrigation_map_' + now.toISOString().slice(0, 10) + '.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+
+        } catch (err) {
+            console.error('[Export] PNG generation failed:', err);
+            alert('PNG export failed. Please try again.');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
     }
 
     /**
